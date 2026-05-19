@@ -1,0 +1,17 @@
+namespace GuildTracker.Models;
+
+/// <summary>
+/// Represents a guild member in Ragnarok Origin Classic.
+/// </summary>
+public class GuildMember
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string IGN { get; set; } = string.Empty;
+    public string Class { get; set; } = string.Empty;
+    public int CombatPower { get; set; }
+    public string Role { get; set; } = "Member";
+    public string Notes { get; set; } = string.Empty;
+    public string DiscordId { get; set; } = string.Empty;
+    public DateTime JoinDate { get; set; } = DateTime.Now;
+    public bool IsActive { get; set; } = true;
+}
