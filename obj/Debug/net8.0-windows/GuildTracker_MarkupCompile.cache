@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-C:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\
 GuildTracker
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
-C:\Users\klualhati\source\repos\GuildTracker\App.xaml
-11407045341
+C:\Program Files (x86)\Github\App.xaml
+31480429919
 
-15-1618422433
+19-1980566442
 2161846405131
-MainWindow.xaml;
+MainWindow.xaml;Views\AddMemberDialog.xaml;Views\MemberDetailDialog.xaml;
 
 False
 

@@ -3,9 +3,6 @@ using GuildTracker.Models;
 
 namespace GuildTracker.Services;
 
-/// <summary>
-/// Exports guild data to Excel using ClosedXML.
-/// </summary>
 public class ExportService
 {
     public void ExportMembers(List<GuildMember> members, string filePath)
@@ -13,7 +10,6 @@ public class ExportService
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Members");
 
-        // Headers
         ws.Cell(1, 1).Value = "IGN";
         ws.Cell(1, 2).Value = "Class";
         ws.Cell(1, 3).Value = "Combat Power";
@@ -48,27 +44,33 @@ public class ExportService
 
         // Headers
         ws.Cell(1, 1).Value = "IGN";
+        ws.Cell(1, 2).Value = "Event";
         for (int i = 0; i < dates.Count; i++)
-            ws.Cell(1, i + 2).Value = dates[i].ToShortDateString();
-        ws.Cell(1, dates.Count + 2).Value = "Attendance %";
+            ws.Cell(1, i + 3).Value = dates[i].ToShortDateString();
+        ws.Cell(1, dates.Count + 3).Value = "Absent Count";
 
-        // Data rows
-        for (int row = 0; row < members.Count; row++)
+        // Group by event
+        var events = records.Select(r => r.EventName).Distinct().ToList();
+        int row = 2;
+
+        foreach (var member in members)
         {
-            var member = members[row];
-            ws.Cell(row + 2, 1).Value = member.IGN;
-
-            int present = 0;
-            for (int col = 0; col < dates.Count; col++)
+            foreach (var evt in events)
             {
-                var record = records.FirstOrDefault(r => r.MemberId == member.Id && r.EventDate.Date == dates[col]);
-                var status = record?.Status ?? AttendanceStatus.Present;
-                ws.Cell(row + 2, col + 2).Value = status.ToString();
-                if (status == AttendanceStatus.Present) present++;
-            }
+                ws.Cell(row, 1).Value = member.IGN;
+                ws.Cell(row, 2).Value = evt;
 
-            var pct = dates.Count > 0 ? (double)present / dates.Count * 100 : 0;
-            ws.Cell(row + 2, dates.Count + 2).Value = $"{pct:F1}%";
+                int absentCount = 0;
+                for (int col = 0; col < dates.Count; col++)
+                {
+                    var isAbsent = records.Any(r =>
+                        r.MemberId == member.Id && r.EventName == evt && r.EventDate.Date == dates[col]);
+                    ws.Cell(row, col + 3).Value = isAbsent ? "Absent" : "Present";
+                    if (isAbsent) absentCount++;
+                }
+                ws.Cell(row, dates.Count + 3).Value = absentCount;
+                row++;
+            }
         }
 
         ws.Columns().AdjustToContents();

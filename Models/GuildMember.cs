@@ -14,4 +14,6 @@ public class GuildMember
     public string DiscordId { get; set; } = string.Empty;
     public DateTime JoinDate { get; set; } = DateTime.Now;
     public bool IsActive { get; set; } = true;
+    public int AbsenceCount { get; set; }
+    public string CpTrend { get; set; } = string.Empty; // "↑", "↓", "—"
 }

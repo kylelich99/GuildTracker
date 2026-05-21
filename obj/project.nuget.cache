@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "jA2NVr2SHzQ=",
+  "dgSpecHash": "p+ogvDnE2PI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\klualhati\\source\\repos\\GuildTracker\\GuildTracker.csproj",
+  "projectFilePath": "C:\\Program Files (x86)\\Github\\GuildTracker.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\klualhati\\.nuget\\packages\\closedxml\\0.102.2\\closedxml.0.102.2.nupkg.sha512",
     "C:\\Users\\klualhati\\.nuget\\packages\\communitytoolkit.mvvm\\8.2.2\\communitytoolkit.mvvm.8.2.2.nupkg.sha512",

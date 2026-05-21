@@ -1,0 +1,70 @@
+## Build results
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+
+## MSBuild
+*.log
+[Bb]uildLog.*
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+*.nuget.props
+*.nuget.targets
+
+## .NET
+project.assets.json
+*.props.user
+
+## Publish output
+publish/
+
+## Rider
+.idea/
+*.sln.iml
+
+## ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## Code coverage
+*.coverage
+*.coveragexml
+coverage/
+
+## OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+## Data files (local runtime data)
+Data/*.json

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\klualhati\\source\\repos\\GuildTracker\\GuildTracker.csproj": {}
+    "C:\\Program Files (x86)\\Github\\GuildTracker.csproj": {}
   },
   "projects": {
-    "C:\\Users\\klualhati\\source\\repos\\GuildTracker\\GuildTracker.csproj": {
+    "C:\\Program Files (x86)\\Github\\GuildTracker.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\klualhati\\source\\repos\\GuildTracker\\GuildTracker.csproj",
+        "projectUniqueName": "C:\\Program Files (x86)\\Github\\GuildTracker.csproj",
         "projectName": "GuildTracker",
-        "projectPath": "C:\\Users\\klualhati\\source\\repos\\GuildTracker\\GuildTracker.csproj",
+        "projectPath": "C:\\Program Files (x86)\\Github\\GuildTracker.csproj",
         "packagesPath": "C:\\Users\\klualhati\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\klualhati\\source\\repos\\GuildTracker\\obj\\",
+        "outputPath": "C:\\Program Files (x86)\\Github\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

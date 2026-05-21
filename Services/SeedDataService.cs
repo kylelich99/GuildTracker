@@ -1,21 +1,15 @@
 using GuildTracker.Models;
-using GuildTracker.Services;
 
 namespace GuildTracker.Services;
 
-/// <summary>
-/// Generates example data for first-time use so the app isn't empty.
-/// Only seeds if members.json doesn't exist yet.
-/// </summary>
 public static class SeedDataService
 {
     public static async Task SeedIfEmptyAsync()
     {
         var dataService = new JsonDataService();
         var members = await dataService.LoadMembersAsync();
-        if (members.Count > 0) return; // Already has data
+        if (members.Count > 0) return;
 
-        // Example Ragnarok Origin Classic members
         var sampleMembers = new List<GuildMember>
         {
             new() { IGN = "ShadowKnight", Class = "Lord Knight", CombatPower = 285000, Role = "Guild Leader" },
@@ -30,7 +24,7 @@ public static class SeedDataService
 
         await dataService.SaveMembersAsync(sampleMembers);
 
-        // Example CP history
+        // CP history
         var cpHistory = new List<CpRecord>();
         var random = new Random(42);
         foreach (var member in sampleMembers)
@@ -48,22 +42,24 @@ public static class SeedDataService
         }
         await dataService.SaveCpHistoryAsync(cpHistory);
 
-        // Example attendance
+        // Attendance - mark a few members as absent on random days
         var attendance = new List<AttendanceRecord>();
-        foreach (var member in sampleMembers)
+        var events = new[] { "Guild League 1", "Guild League 2", "Emperium Overrun" };
+        foreach (var evt in events)
         {
             for (int i = 5; i >= 0; i--)
             {
-                var status = random.Next(10) < 8 ? AttendanceStatus.Present :
-                             random.Next(3) == 0 ? AttendanceStatus.Absent :
-                             AttendanceStatus.Late;
-                attendance.Add(new AttendanceRecord
+                // Randomly mark 1-2 members absent per event per day
+                var absentMembers = sampleMembers.OrderBy(_ => random.Next()).Take(random.Next(1, 3));
+                foreach (var member in absentMembers)
                 {
-                    MemberId = member.Id,
-                    EventDate = DateTime.Today.AddDays(-i),
-                    EventName = i % 2 == 0 ? "WoE" : "Guild Raid",
-                    Status = status
-                });
+                    attendance.Add(new AttendanceRecord
+                    {
+                        MemberId = member.Id,
+                        EventDate = DateTime.Today.AddDays(-i),
+                        EventName = evt
+                    });
+                }
             }
         }
         await dataService.SaveAttendanceAsync(attendance);

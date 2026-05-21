@@ -28,6 +28,9 @@ public class JsonDataService
     private string MembersPath => Path.Combine(DataFolder, "members.json");
     private string AttendancePath => Path.Combine(DataFolder, "attendance.json");
     private string CpHistoryPath => Path.Combine(DataFolder, "cp_history.json");
+    private string ClassesPath => Path.Combine(DataFolder, "classes.json");
+    private string RolesPath => Path.Combine(DataFolder, "roles.json");
+    private string EventsPath => Path.Combine(DataFolder, "events.json");
 
     // --- Members ---
     public async Task<List<GuildMember>> LoadMembersAsync()
@@ -60,6 +63,72 @@ public class JsonDataService
     public async Task SaveCpHistoryAsync(List<CpRecord> records)
     {
         await SaveAsync(CpHistoryPath, records);
+    }
+
+    // --- Classes ---
+    public async Task<List<string>> LoadClassesAsync()
+    {
+        var classes = await LoadAsync<List<string>>(ClassesPath);
+        if (classes == null || classes.Count == 0)
+        {
+            // Default Ragnarok Origin Classic classes
+            classes = new List<string>
+            {
+                "Novice", "Swordsman", "Knight", "Lord Knight", "Crusader", "Paladin",
+                "Mage", "Wizard", "High Wizard", "Sage", "Professor",
+                "Archer", "Hunter", "Sniper", "Bard", "Clown", "Dancer", "Gypsy",
+                "Thief", "Assassin", "Assassin Cross", "Rogue", "Stalker",
+                "Acolyte", "Priest", "High Priest", "Monk", "Champion",
+                "Merchant", "Blacksmith", "Whitesmith", "Alchemist", "Creator",
+                "Soul Linker", "Star Gladiator", "Ninja", "Gunslinger"
+            };
+            await SaveClassesAsync(classes);
+        }
+        return classes;
+    }
+
+    public async Task SaveClassesAsync(List<string> classes)
+    {
+        await SaveAsync(ClassesPath, classes);
+    }
+
+    // --- Roles ---
+    public async Task<List<string>> LoadRolesAsync()
+    {
+        var roles = await LoadAsync<List<string>>(RolesPath);
+        if (roles == null || roles.Count == 0)
+        {
+            roles = new List<string> { "Guild Leader", "Vice Leader", "Officer", "Member" };
+            await SaveRolesAsync(roles);
+        }
+        return roles;
+    }
+
+    public async Task SaveRolesAsync(List<string> roles)
+    {
+        await SaveAsync(RolesPath, roles);
+    }
+
+    // --- Events ---
+    public async Task<List<GuildEvent>> LoadEventsAsync()
+    {
+        var events = await LoadAsync<List<GuildEvent>>(EventsPath);
+        if (events == null || events.Count == 0)
+        {
+            events = new List<GuildEvent>
+            {
+                new() { Name = "Guild League 1", ScheduledDay = DayOfWeek.Tuesday },
+                new() { Name = "Guild League 2", ScheduledDay = DayOfWeek.Thursday },
+                new() { Name = "Emperium Overrun", ScheduledDay = DayOfWeek.Sunday }
+            };
+            await SaveEventsAsync(events);
+        }
+        return events;
+    }
+
+    public async Task SaveEventsAsync(List<GuildEvent> events)
+    {
+        await SaveAsync(EventsPath, events);
     }
 
     // --- Generic Load/Save ---

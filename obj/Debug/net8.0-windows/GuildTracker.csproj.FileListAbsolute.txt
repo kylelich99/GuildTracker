@@ -40,3 +40,54 @@ c:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\refint\Gui
 c:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\GuildTracker.pdb
 c:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\GuildTracker.genruntimeconfig.cache
 c:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\ref\GuildTracker.dll
+c:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\Views\AddMemberDialog.baml
+c:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\Views\AddMemberDialog.g.cs
+c:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\Views\MemberDetailDialog.baml
+c:\Users\klualhati\source\repos\GuildTracker\obj\Debug\net8.0-windows\Views\MemberDetailDialog.g.cs
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\GuildTracker.exe
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\GuildTracker.deps.json
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\GuildTracker.runtimeconfig.json
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\GuildTracker.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\GuildTracker.pdb
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\ClosedXML.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\CommunityToolkit.Mvvm.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Discord.Net.Commands.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Discord.Net.Core.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Discord.Net.Interactions.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Discord.Net.Rest.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Discord.Net.Webhook.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Discord.Net.WebSocket.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\DocumentFormat.OpenXml.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\ExcelNumberFormat.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Irony.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\Newtonsoft.Json.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\SixLabors.Fonts.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\System.Interactive.Async.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\System.Linq.Async.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\System.Reactive.dll
+C:\Program Files (x86)\Github\bin\Debug\net8.0-windows\XLParser.dll
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.csproj.AssemblyReference.cache
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\Views\AddMemberDialog.baml
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\Views\MemberDetailDialog.baml
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\MainWindow.g.cs
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\Views\AddMemberDialog.g.cs
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\Views\MemberDetailDialog.g.cs
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\App.g.cs
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GeneratedInternalTypeHelper.g.cs
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker_MarkupCompile.cache
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker_MarkupCompile.lref
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\App.baml
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\MainWindow.baml
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.g.resources
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.GeneratedMSBuildEditorConfig.editorconfig
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.AssemblyInfoInputs.cache
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.AssemblyInfo.cs
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.csproj.CoreCompileInputs.cache
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.sourcelink.json
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTra.61F68A0F.Up2Date
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.dll
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\refint\GuildTracker.dll
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.pdb
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\GuildTracker.genruntimeconfig.cache
+C:\Program Files (x86)\Github\obj\Debug\net8.0-windows\ref\GuildTracker.dll

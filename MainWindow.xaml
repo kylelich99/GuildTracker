@@ -12,7 +12,6 @@
     </Window.DataContext>
 
     <Window.Resources>
-        <!-- Dark Theme Styles -->
         <Style x:Key="NavButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#cdd6f4"/>
@@ -78,17 +77,142 @@
             <Setter Property="BorderBrush" Value="#585b70"/>
             <Setter Property="Padding" Value="6,4"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="#cdd6f4"/>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#45475a"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+            <Setter Property="BorderBrush" Value="#585b70"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton" Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="#45475a" BorderBrush="#585b70" BorderThickness="1" CornerRadius="4">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="24"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Path Grid.Column="1" Data="M0,0 L4,4 8,0" Stroke="#cdd6f4" StrokeThickness="1.5"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              Margin="8,4,28,4" VerticalAlignment="Center" HorizontalAlignment="Left">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#cdd6f4"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                            <TextBox x:Name="PART_EditableTextBox" Visibility="Hidden" IsReadOnly="{TemplateBinding IsReadOnly}"
+                                     Background="Transparent" Foreground="#cdd6f4" Margin="6,4,28,4"
+                                     VerticalAlignment="Center" HorizontalAlignment="Left" Focusable="True"/>
+                            <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Grid MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border Background="#313244" BorderBrush="#585b70" BorderThickness="1" CornerRadius="4">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <StackPanel IsItemsHost="True"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" Value="#45475a"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#585b70"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style TargetType="DatePicker">
             <Setter Property="Background" Value="#45475a"/>
             <Setter Property="Foreground" Value="#cdd6f4"/>
             <Setter Property="BorderBrush" Value="#585b70"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePicker">
+                        <Border Background="#45475a" BorderBrush="#585b70" BorderThickness="1" CornerRadius="4" Padding="6,4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <DatePickerTextBox x:Name="PART_TextBox" 
+                                                   Background="Transparent" Foreground="#cdd6f4" 
+                                                   BorderThickness="0" VerticalAlignment="Center"
+                                                   Focusable="True"/>
+                                <Button x:Name="PART_Button" Grid.Column="1" 
+                                        Background="Transparent" BorderThickness="0" 
+                                        Padding="4,0" VerticalAlignment="Center">
+                                    <Path Data="M0,0 L6,6 12,0" Stroke="#cdd6f4" StrokeThickness="1.5"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+                                <Popup x:Name="PART_Popup" PlacementTarget="{Binding ElementName=PART_TextBox}" 
+                                       Placement="Bottom" AllowsTransparency="True" StaysOpen="False"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <!-- BoolToVisibility Converter -->
+        <Style TargetType="DatePickerTextBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePickerTextBox">
+                        <TextBox Text="{Binding Path=Text, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="Transparent" Foreground="#cdd6f4" BorderThickness="0"
+                                 Padding="0" VerticalAlignment="Center" CaretBrush="#cdd6f4"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -98,64 +222,144 @@
 
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="#181825" Padding="8">
-            <StackPanel>
-                <TextBlock Text="⚔️ Guild Tracker" FontSize="18" FontWeight="Bold" 
-                           Foreground="#cba6f7" Margin="8,16,8,24" HorizontalAlignment="Center"/>
-                
-                <Button Content="📊 Dashboard" Style="{StaticResource NavButton}" 
-                        Command="{Binding NavigateCommand}" CommandParameter="Dashboard"/>
-                <Button Content="👥 Members" Style="{StaticResource NavButton}" 
-                        Command="{Binding NavigateCommand}" CommandParameter="Members"/>
-                <Button Content="📋 Attendance" Style="{StaticResource NavButton}" 
-                        Command="{Binding NavigateCommand}" CommandParameter="Attendance"/>
-                <Button Content="⚡ Combat Power" Style="{StaticResource NavButton}" 
-                        Command="{Binding NavigateCommand}" CommandParameter="CombatPower"/>
-                
-                <Separator Margin="8,16" Background="#45475a"/>
-                
-                <Button Content="💾 Save All" Style="{StaticResource NavButton}" Command="{Binding SaveCommand}"/>
-                <Button Content="📤 Export Members" Style="{StaticResource NavButton}" Command="{Binding ExportMembersCommand}"/>
-                <Button Content="📤 Export Attendance" Style="{StaticResource NavButton}" Command="{Binding ExportAttendanceCommand}"/>
-            </StackPanel>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="⚔️ Guild Tracker" FontSize="18" FontWeight="Bold" 
+                               Foreground="#cba6f7" Margin="8,16,8,24" HorizontalAlignment="Center"/>
+                    
+                    <Button Content="📊 Dashboard" Style="{StaticResource NavButton}" 
+                            Command="{Binding NavigateCommand}" CommandParameter="Dashboard"/>
+                    <Button Content="👥 Members" Style="{StaticResource NavButton}" 
+                            Command="{Binding NavigateCommand}" CommandParameter="Members"/>
+                    <Button Content="📋 Guild Events" Style="{StaticResource NavButton}" 
+                            Command="{Binding NavigateCommand}" CommandParameter="Attendance"/>
+                    <Button Content="⚡ Combat Power" Style="{StaticResource NavButton}" 
+                            Command="{Binding NavigateCommand}" CommandParameter="CombatPower"/>
+                    
+                    <Separator Margin="8,16" Background="#45475a"/>
+                    
+                    <Button Content="💾 Save All" Style="{StaticResource NavButton}" Command="{Binding SaveCommand}"/>
+                    <Button Content="📤 Export Members" Style="{StaticResource NavButton}" Command="{Binding ExportMembersCommand}"/>
+                    <Button Content="📤 Export Attendance" Style="{StaticResource NavButton}" Command="{Binding ExportAttendanceCommand}"/>
+                </StackPanel>
+
+                <!-- Settings at bottom -->
+                <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
+                    <Separator Margin="8,8" Background="#45475a"/>
+                    <Button Content="⚙️ Settings" Style="{StaticResource NavButton}" 
+                            Command="{Binding NavigateCommand}" CommandParameter="Settings"/>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <!-- Main Content Area -->
         <Grid Grid.Column="1" Margin="16">
             
-            <!-- Dashboard View -->
-            <StackPanel Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Dashboard}">
-                <TextBlock Text="Dashboard" FontSize="24" FontWeight="Bold" Foreground="#cdd6f4" Margin="0,0,0,16"/>
+            <!-- ==================== DASHBOARD ==================== -->
+            <ScrollViewer Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Dashboard}"
+                          VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,8,0">
+                <TextBlock Text="Dashboard" FontSize="24" FontWeight="Bold" Foreground="#cdd6f4" Margin="0,0,0,4"/>
+                <TextBlock Text="Ctrl+S Save | Ctrl+F Search | Ctrl+Z Undo | Delete Remove" 
+                           Foreground="#585b70" FontSize="10" Margin="0,0,0,16"/>
                 
-                <!-- Dashboard Cards -->
+                <!-- Stats Cards -->
                 <WrapPanel>
-                    <Border Style="{StaticResource CardBorder}" Width="200">
+                    <Border Style="{StaticResource CardBorder}" Width="180">
                         <StackPanel>
-                            <TextBlock Text="Total Members" Foreground="#a6adc8" FontSize="12"/>
-                            <TextBlock Text="{Binding TotalMembers}" Foreground="#a6e3a1" FontSize="32" FontWeight="Bold"/>
+                            <TextBlock Text="Total Members" Foreground="#a6adc8" FontSize="11"/>
+                            <TextBlock Text="{Binding TotalMembers}" Foreground="#a6e3a1" FontSize="28" FontWeight="Bold"/>
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource CardBorder}" Width="200">
+                    <Border Style="{StaticResource CardBorder}" Width="180">
                         <StackPanel>
-                            <TextBlock Text="Average CP" Foreground="#a6adc8" FontSize="12"/>
-                            <TextBlock Text="{Binding AverageCp, StringFormat=N0}" Foreground="#89b4fa" FontSize="32" FontWeight="Bold"/>
+                            <TextBlock Text="Average CP" Foreground="#a6adc8" FontSize="11"/>
+                            <TextBlock Text="{Binding AverageCp, StringFormat=N0}" Foreground="#89b4fa" FontSize="28" FontWeight="Bold"/>
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource CardBorder}" Width="200">
+                    <Border Style="{StaticResource CardBorder}" Width="180">
                         <StackPanel>
-                            <TextBlock Text="Attendance %" Foreground="#a6adc8" FontSize="12"/>
-                            <TextBlock Text="{Binding AttendancePercent, StringFormat={}{0:F1}%}" Foreground="#f9e2af" FontSize="32" FontWeight="Bold"/>
+                            <TextBlock Text="Total CP" Foreground="#a6adc8" FontSize="11"/>
+                            <TextBlock Text="{Binding TotalCp, StringFormat=N0}" Foreground="#74c7ec" FontSize="28" FontWeight="Bold"/>
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource CardBorder}" Width="200">
+                    <Border Style="{StaticResource CardBorder}" Width="180">
                         <StackPanel>
-                            <TextBlock Text="Absent Today" Foreground="#a6adc8" FontSize="12"/>
-                            <TextBlock Text="{Binding AbsentCount}" Foreground="#f38ba8" FontSize="32" FontWeight="Bold"/>
+                            <TextBlock Text="Week Absences" Foreground="#a6adc8" FontSize="11"/>
+                            <TextBlock Text="{Binding WeekAbsences}" Foreground="#f38ba8" FontSize="28" FontWeight="Bold"/>
                         </StackPanel>
                     </Border>
                 </WrapPanel>
 
+                <!-- MVP of the Week - full width so names aren't cut -->
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel>
+                        <TextBlock Text="🏆 MVP of the Week" Foreground="#a6adc8" FontSize="11"/>
+                        <TextBlock Text="{Binding MvpOfWeek}" Foreground="#f9e2af" FontSize="15" FontWeight="Bold" 
+                                   Margin="0,4,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Weekly Event Schedule -->
+                <StackPanel Orientation="Horizontal" Margin="0,20,0,8">
+                    <TextBlock Text="Weekly Events" FontSize="16" FontWeight="SemiBold" Foreground="#cdd6f4" VerticalAlignment="Center"/>
+                    <Button Content="◀" Style="{StaticResource ActionButton}" Background="#45475a" Foreground="#cdd6f4"
+                            Padding="6,3" Margin="12,0,4,0" Command="{Binding DashboardPrevWeekCommand}" FontSize="10"/>
+                    <TextBlock Text="{Binding DashboardWeekLabel}" Foreground="#a6adc8" VerticalAlignment="Center" Margin="4,0"/>
+                    <Button Content="▶" Style="{StaticResource ActionButton}" Background="#45475a" Foreground="#cdd6f4"
+                            Padding="6,3" Margin="4,0" Command="{Binding DashboardNextWeekCommand}" FontSize="10"/>
+                </StackPanel>
+                <Border Style="{StaticResource CardBorder}">
+                    <ItemsControl ItemsSource="{Binding WeeklySchedule}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding EventName}" Foreground="#cdd6f4" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Day}" Foreground="#a6adc8"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Date}" Foreground="#a6adc8"/>
+                                    <TextBlock Grid.Column="3" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="{Binding Status}"/>
+                                                <Setter Property="Foreground" Value="#a6adc8"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                        <Setter Property="Foreground" Value="#f9e2af"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                        <Setter Property="Foreground" Value="#a6e3a1"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Grid.Column="4" Foreground="#f38ba8">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value=""/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                        <Setter Property="Text" Value="{Binding AbsentCount, StringFormat={}{0} absent}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+
                 <!-- Top CP Rankings -->
-                <TextBlock Text="Top CP Rankings" FontSize="16" FontWeight="SemiBold" Foreground="#cdd6f4" Margin="0,24,0,8"/>
+                <TextBlock Text="Top CP Rankings" FontSize="16" FontWeight="SemiBold" Foreground="#cdd6f4" Margin="0,20,0,8"/>
                 <Border Style="{StaticResource CardBorder}">
                     <ItemsControl ItemsSource="{Binding FilteredMembers}">
                         <ItemsControl.ItemTemplate>
@@ -163,11 +367,12 @@
                                 <Grid Margin="0,2">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="200"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="120"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="{Binding IGN}" Foreground="#cdd6f4"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Class}" Foreground="#a6adc8"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Class}" 
+                                               Foreground="{Binding Class, Converter={StaticResource ClassToColorConverter}}" FontWeight="SemiBold"/>
                                     <TextBlock Grid.Column="2" Text="{Binding CombatPower, StringFormat=CP: {0:N0}}" Foreground="#89b4fa"/>
                                 </Grid>
                             </DataTemplate>
@@ -175,8 +380,7 @@
                     </ItemsControl>
                 </Border>
             </StackPanel>
-
-            <!-- Members View -->
+            </ScrollViewer>
             <Grid Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Members}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -186,24 +390,34 @@
 
                 <TextBlock Text="Member Management" FontSize="24" FontWeight="Bold" Foreground="#cdd6f4" Margin="0,0,0,12"/>
 
-                <!-- Toolbar -->
+                <!-- Toolbar: Search + Filter + Actions -->
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-                    <TextBox Width="200" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                             Tag="Search members..."/>
-                    <Button Content="+ Add Member" Style="{StaticResource ActionButton}" Margin="8,0"
+                    <Grid>
+                        <TextBox Width="180" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" x:Name="SearchBox"/>
+                        <TextBlock Text="🔍 Search members..." Foreground="#6c7086" Margin="10,5,0,0" IsHitTestVisible="False"
+                                   Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVis}}"/>
+                    </Grid>
+                    <ComboBox Width="140" Margin="8,0"
+                              ItemsSource="{Binding AvailableClasses}" 
+                              SelectedItem="{Binding SelectedClassFilter}"/>
+                    <Button Content="+ Add Member" Style="{StaticResource ActionButton}" Margin="4,0"
                             Command="{Binding AddMemberCommand}"/>
-                    <Button Content="Remove" Style="{StaticResource DangerButton}" 
-                            Command="{Binding RemoveMemberCommand}"/>
+                    <Button Content="🗑 Remove Selected" Style="{StaticResource DangerButton}" Margin="4,0"
+                            Click="RemoveSelected_Click"/>
                 </StackPanel>
 
                 <!-- Members DataGrid -->
-                <DataGrid Grid.Row="2" ItemsSource="{Binding FilteredMembers}" 
+                <DataGrid x:Name="MembersGrid" Grid.Row="2" 
+                          ItemsSource="{Binding FilteredMembers}" 
                           SelectedItem="{Binding SelectedMember}"
+                          SelectionMode="Extended"
                           AutoGenerateColumns="False" CanUserAddRows="False"
                           Background="#313244" Foreground="#cdd6f4"
                           RowBackground="#313244" AlternatingRowBackground="#3b3d50"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#45475a"
-                          BorderBrush="#45475a" HeadersVisibility="Column">
+                          BorderBrush="#45475a" HeadersVisibility="Column"
+                          RowHeaderWidth="0"
+                          MouseDoubleClick="MembersGrid_DoubleClick">
                     <DataGrid.ColumnHeaderStyle>
                         <Style TargetType="DataGridColumnHeader">
                             <Setter Property="Background" Value="#181825"/>
@@ -215,56 +429,142 @@
                     </DataGrid.ColumnHeaderStyle>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="IGN" Binding="{Binding IGN}" Width="150"/>
-                        <DataGridTextColumn Header="Class" Binding="{Binding Class}" Width="120"/>
-                        <DataGridTextColumn Header="Combat Power" Binding="{Binding CombatPower}" Width="120"/>
+                        <DataGridTemplateColumn Header="Class" Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Class}" 
+                                               Foreground="{Binding Class, Converter={StaticResource ClassToColorConverter}}"
+                                               FontWeight="SemiBold" Padding="4,2"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.CellEditingTemplate>
+                                <DataTemplate>
+                                    <ComboBox ItemsSource="{Binding DataContext.AvailableClasses, RelativeSource={RelativeSource AncestorType=Window}}"
+                                              SelectedItem="{Binding Class, UpdateSourceTrigger=PropertyChanged}"
+                                              IsEditable="True" IsDropDownOpen="True"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Combat Power" Binding="{Binding CombatPower}" Width="120" SortDirection="Descending"/>
+                        <DataGridTemplateColumn Header="" Width="30" CanUserSort="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding CpTrend}" FontSize="14" FontWeight="Bold" Padding="2,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#a6adc8"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CpTrend}" Value="↑">
+                                                        <Setter Property="Foreground" Value="#a6e3a1"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding CpTrend}" Value="↓">
+                                                        <Setter Property="Foreground" Value="#f38ba8"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="100"/>
-                        <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*"/>
+                        <DataGridTemplateColumn Header="Absences" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding AbsenceCount}" Padding="4,2" Foreground="#f38ba8" FontWeight="SemiBold"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Discord ID" Binding="{Binding DiscordId}" Width="120"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
 
-            <!-- Attendance View -->
+            <!-- ==================== ATTENDANCE ==================== -->
             <Grid Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Attendance}">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="Attendance Tracking" FontSize="24" FontWeight="Bold" Foreground="#cdd6f4" Margin="0,0,0,12"/>
+                <TextBlock Text="Guild Events" FontSize="24" FontWeight="Bold" Foreground="#cdd6f4" Margin="0,0,0,12"/>
 
-                <!-- Attendance Controls -->
-                <StackPanel Grid.Row="1" Margin="0,0,0,12">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="Event:" Foreground="#cdd6f4" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBox Width="150" Text="{Binding EventName}" Margin="0,0,12,0"/>
-                        <TextBlock Text="Date:" Foreground="#cdd6f4" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <DatePicker SelectedDate="{Binding SelectedEventDate}" Width="140" Margin="0,0,12,0"/>
-                        <Button Content="Create Event" Style="{StaticResource ActionButton}" 
-                                Command="{Binding AddAttendanceEventCommand}"/>
+                <!-- Event Tabs -->
+                <TabControl Grid.Row="1" 
+                            ItemsSource="{Binding EventTabNames}" 
+                            SelectedItem="{Binding SelectedEvent}"
+                            Background="Transparent" BorderThickness="0" Margin="0,0,0,12">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="TabItem">
+                            <Setter Property="Background" Value="#313244"/>
+                            <Setter Property="Foreground" Value="#a6adc8"/>
+                            <Setter Property="Padding" Value="14,8"/>
+                            <Setter Property="Margin" Value="0,0,4,0"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="TabItem">
+                                        <Border x:Name="TabBorder" Background="{TemplateBinding Background}" 
+                                                Padding="{TemplateBinding Padding}" CornerRadius="6,6,0,0">
+                                            <ContentPresenter ContentSource="Header"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="TabBorder" Property="Background" Value="#45475a"/>
+                                                <Setter Property="Foreground" Value="#cba6f7"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="TabBorder" Property="Background" Value="#3b3d50"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate>
+                            <!-- Empty - we handle content below -->
+                            <Border/>
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+                </TabControl>
+
+                <!-- Date picker + Week navigation + Actions -->
+                <WrapPanel Grid.Row="2" Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,12,6">
+                        <Button Content="◀" Style="{StaticResource ActionButton}" Background="#45475a" Foreground="#cdd6f4"
+                                Padding="8,6" Margin="0,0,4,0" Command="{Binding PrevWeekCommand}" ToolTip="Previous week"/>
+                        <DatePicker SelectedDate="{Binding AttendanceDate}" Width="140"/>
+                        <Button Content="▶" Style="{StaticResource ActionButton}" Background="#45475a" Foreground="#cdd6f4"
+                                Padding="8,6" Margin="4,0,0,0" Command="{Binding NextWeekCommand}" ToolTip="Next week"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Mark Selected:" Foreground="#a6adc8" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <Button Content="Present" Style="{StaticResource ActionButton}" Margin="0,0,4,0"
-                                Command="{Binding MarkPresentCommand}"/>
-                        <Button Content="Absent" Style="{StaticResource DangerButton}" Margin="0,0,4,0"
-                                Command="{Binding MarkAbsentCommand}"/>
-                        <Button Content="Late" Style="{StaticResource ActionButton}" Margin="0,0,4,0"
-                                Background="#f9e2af" Command="{Binding MarkLateCommand}"/>
-                        <Button Content="Partial" Style="{StaticResource ActionButton}" 
-                                Background="#fab387" Command="{Binding MarkPartialCommand}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Button Content="✗ Mark Absent" Style="{StaticResource DangerButton}" Margin="0,0,6,0"
+                                Click="MarkAbsent_Click"/>
+                        <Button Content="✓ Undo Absent" Style="{StaticResource ActionButton}" Margin="0,0,12,0"
+                                Click="UnmarkAbsent_Click"/>
+                        <Button Content="🏆 MVP" Style="{StaticResource ActionButton}" Background="#f9e2af" Margin="0,0,4,0"
+                                Click="SetMvp_Click"/>
+                        <Button Content="⚔️ God of War" Style="{StaticResource ActionButton}" Background="#f38ba8" Margin="0,0,4,0"
+                                Click="SetGodOfWar_Click"/>
+                        <Button Content="💫 Best Support" Style="{StaticResource ActionButton}" Background="#94e2d5"
+                                Click="SetBestSupport_Click"/>
                     </StackPanel>
-                </StackPanel>
+                </WrapPanel>
 
                 <!-- Attendance Grid -->
-                <DataGrid Grid.Row="2" ItemsSource="{Binding FilteredMembers}" 
-                          SelectedItem="{Binding SelectedMember}"
+                <DataGrid x:Name="AttendanceGrid" Grid.Row="3" 
+                          ItemsSource="{Binding AttendanceRows}"
+                          SelectionMode="Extended"
                           AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                           Background="#313244" Foreground="#cdd6f4"
                           RowBackground="#313244" AlternatingRowBackground="#3b3d50"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#45475a"
-                          BorderBrush="#45475a">
+                          BorderBrush="#45475a" HeadersVisibility="Column"
+                          RowHeaderWidth="0">
                     <DataGrid.ColumnHeaderStyle>
                         <Style TargetType="DataGridColumnHeader">
                             <Setter Property="Background" Value="#181825"/>
@@ -274,15 +574,76 @@
                             <Setter Property="BorderThickness" Value="0,0,1,1"/>
                         </Style>
                     </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Padding" Value="4,2"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#45475a"/>
+                                    <Setter Property="Foreground" Value="#cdd6f4"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.CellStyle>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAbsent}" Value="True">
+                                    <Setter Property="Background" Value="#302030"/>
+                                    <Setter Property="Foreground" Value="#f38ba8"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="IGN" Binding="{Binding IGN}" Width="150"/>
-                        <DataGridTextColumn Header="Class" Binding="{Binding Class}" Width="120"/>
+                        <DataGridTemplateColumn Header="Class" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Class}" 
+                                               Foreground="{Binding Class, Converter={StaticResource ClassToColorConverter}}"
+                                               FontWeight="SemiBold" Padding="4,2"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="100"/>
+                        <DataGridTemplateColumn Header="Status" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Padding="4,2" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="✓ Online"/>
+                                                <Setter Property="Foreground" Value="#a6e3a1"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsAbsent}" Value="True">
+                                                        <Setter Property="Text" Value="✗ Absent"/>
+                                                        <Setter Property="Foreground" Value="#f38ba8"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Awards" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="4,2">
+                                        <TextBlock Text="🏆" Visibility="{Binding IsMvp, Converter={StaticResource BoolToVis}}" Margin="0,0,3,0"/>
+                                        <TextBlock Text="⚔️" Visibility="{Binding IsGodOfWar, Converter={StaticResource BoolToVis}}" Margin="0,0,3,0"/>
+                                        <TextBlock Text="💫" Visibility="{Binding IsBestSupport, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
 
-            <!-- Combat Power View -->
+            <!-- ==================== COMBAT POWER ==================== -->
             <Grid Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=CombatPower}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -292,7 +653,6 @@
 
                 <TextBlock Text="Combat Power Tracking" FontSize="24" FontWeight="Bold" Foreground="#cdd6f4" Margin="0,0,0,12"/>
 
-                <!-- CP Update Controls -->
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
                     <TextBlock Text="New CP:" Foreground="#cdd6f4" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBox Width="120" Text="{Binding NewCpValue}" Margin="0,0,12,0"/>
@@ -307,14 +667,14 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Member List -->
                     <DataGrid ItemsSource="{Binding FilteredMembers}" 
                               SelectedItem="{Binding SelectedMember}"
                               AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                               Background="#313244" Foreground="#cdd6f4"
                               RowBackground="#313244" AlternatingRowBackground="#3b3d50"
                               GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#45475a"
-                              BorderBrush="#45475a" Margin="0,0,8,0">
+                              BorderBrush="#45475a" Margin="0,0,8,0"
+                              RowHeaderWidth="0">
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="Background" Value="#181825"/>
@@ -330,7 +690,6 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <!-- CP History -->
                     <Border Grid.Column="1" Style="{StaticResource CardBorder}">
                         <StackPanel>
                             <TextBlock Text="CP History" FontSize="14" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,8"/>
@@ -354,6 +713,142 @@
                     </Border>
                 </Grid>
             </Grid>
+
+            <!-- ==================== SETTINGS ==================== -->
+            <Grid Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Settings}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Settings" FontSize="24" FontWeight="Bold" Foreground="#cdd6f4" Margin="0,0,0,16"/>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Class Configuration Section -->
+                        <Border Style="{StaticResource CardBorder}">
+                            <StackPanel>
+                                <TextBlock Text="Class Configuration" FontSize="16" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,12"/>
+                                <TextBlock Text="Manage the list of available classes for member assignment." Foreground="#a6adc8" Margin="0,0,0,12"/>
+
+                                <!-- Add new class -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBox Width="200" Text="{Binding NewClassName, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,8,0"/>
+                                    <Button Content="+ Add Class" Style="{StaticResource ActionButton}" 
+                                            Command="{Binding AddClassCommand}"/>
+                                </StackPanel>
+
+                                <!-- Class list -->
+                                <ListBox ItemsSource="{Binding AvailableClasses}" 
+                                         SelectedItem="{Binding SelectedClassToDelete}"
+                                         Background="#45475a" Foreground="#cdd6f4" 
+                                         BorderBrush="#585b70" MaxHeight="300"
+                                         Padding="4">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" Padding="4,2" Foreground="#cdd6f4"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <Button Content="🗑 Remove Selected Class" Style="{StaticResource DangerButton}" 
+                                        Margin="0,12,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding RemoveClassCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Role Configuration Section -->
+                        <Border Style="{StaticResource CardBorder}" Margin="6,12,6,6">
+                            <StackPanel>
+                                <TextBlock Text="Role Configuration" FontSize="16" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,12"/>
+                                <TextBlock Text="Manage the list of available roles." Foreground="#a6adc8" Margin="0,0,0,12"/>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBox Width="200" Text="{Binding NewRoleName, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,8,0"/>
+                                    <Button Content="+ Add Role" Style="{StaticResource ActionButton}" 
+                                            Command="{Binding AddRoleCommand}"/>
+                                </StackPanel>
+
+                                <ListBox ItemsSource="{Binding AvailableRoles}" 
+                                         SelectedItem="{Binding SelectedRoleToDelete}"
+                                         Background="#45475a" Foreground="#cdd6f4" 
+                                         BorderBrush="#585b70" MaxHeight="200"
+                                         Padding="4">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" Padding="4,2" Foreground="#cdd6f4"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <Button Content="🗑 Remove Selected Role" Style="{StaticResource DangerButton}" 
+                                        Margin="0,12,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding RemoveRoleCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Event Configuration Section -->
+                        <Border Style="{StaticResource CardBorder}" Margin="6,12,6,6">
+                            <StackPanel>
+                                <TextBlock Text="Event Configuration" FontSize="16" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,12"/>
+                                <TextBlock Text="Manage weekly guild events. Each event has a scheduled day — the date auto-sets when you switch tabs." Foreground="#a6adc8" Margin="0,0,0,12" TextWrapping="Wrap"/>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBox Width="160" Text="{Binding NewEventName, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,8,0"/>
+                                    <ComboBox Width="110" Margin="0,0,8,0"
+                                              ItemsSource="{Binding DaysOfWeek}"
+                                              SelectedItem="{Binding NewEventDay}"/>
+                                    <Button Content="+ Add Event" Style="{StaticResource ActionButton}" 
+                                            Command="{Binding AddEventCommand}"/>
+                                </StackPanel>
+
+                                <ListBox ItemsSource="{Binding AvailableEvents}" 
+                                         SelectedItem="{Binding SelectedEventToDelete}"
+                                         Background="#45475a" Foreground="#cdd6f4" 
+                                         BorderBrush="#585b70" MaxHeight="200"
+                                         Padding="4">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}" Foreground="#cdd6f4" Padding="4,2" Width="180"/>
+                                                <TextBlock Text="{Binding ScheduledDay}" Foreground="#a6adc8" Padding="4,2"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <Button Content="🗑 Remove Selected Event" Style="{StaticResource DangerButton}" 
+                                        Margin="0,12,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding RemoveEventCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Data Info -->
+                        <Border Style="{StaticResource CardBorder}" Margin="6,12,6,6">
+                            <StackPanel>
+                                <TextBlock Text="Data Storage" FontSize="16" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,12"/>
+                                <TextBlock Text="{Binding DataFolderPath}" Foreground="#a6adc8" TextWrapping="Wrap"/>
+                                <Button Content="Open Data Folder" Style="{StaticResource ActionButton}" 
+                                        Margin="0,12,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding OpenDataFolderCommand}"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
         </Grid>
+    </Grid>
+
+    <!-- Status Bar -->
+    <Border Grid.Row="1" Background="#181825" Padding="12,6">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#6c7086" FontSize="11"/>
+        </StackPanel>
+    </Border>
+
     </Grid>
 </Window>

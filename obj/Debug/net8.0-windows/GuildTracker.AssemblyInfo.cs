@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GuildTracker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fb6daabf2db2fc048b73b5ad7b2ef0d32b9ac41a")]
 [assembly: System.Reflection.AssemblyProductAttribute("GuildTracker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GuildTracker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
