@@ -1,3 +1,5 @@
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace GuildTracker.Models;
 
 /// <summary>
@@ -5,6 +7,7 @@ namespace GuildTracker.Models;
 /// </summary>
 public class GuildMember
 {
+    [BsonId]
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string IGN { get; set; } = string.Empty;
     public string Class { get; set; } = string.Empty;

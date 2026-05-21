@@ -9,6 +9,7 @@
         Background="#1e1e2e">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style TargetType="TextBox">
             <Setter Property="Background" Value="#45475a"/>
             <Setter Property="Foreground" Value="#cdd6f4"/>
@@ -57,7 +58,8 @@
                                     </Style>
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
-                            <TextBox x:Name="PART_EditableTextBox" Visibility="Hidden"
+                            <TextBox x:Name="PART_EditableTextBox"
+                                     Visibility="{Binding IsEditable, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BoolToVis}}"
                                      IsReadOnly="{TemplateBinding IsReadOnly}"
                                      Background="Transparent" Foreground="#cdd6f4"
                                      Margin="8,6,28,6" Padding="0"

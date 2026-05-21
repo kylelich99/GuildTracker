@@ -20,20 +20,15 @@ namespace GuildTracker.Discord;
 public class DiscordBotService
 {
     private DiscordSocketClient? _client;
-    private readonly JsonDataService _dataService = new();
+    private readonly MongoDataService _dataService = new();
     private bool _isRunning;
 
     public bool IsRunning => _isRunning;
 
     public async Task StartAsync()
     {
-        var tokenPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "discord_token.txt");
-        if (!File.Exists(tokenPath))
-        {
-            // Create a placeholder file so users know where to put the token
-            await File.WriteAllTextAsync(tokenPath, "PUT_YOUR_BOT_TOKEN_HERE");
-            return;
-        }
+        var tokenPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "discord_token.txt");
+        if (!File.Exists(tokenPath)) return;
 
         var token = (await File.ReadAllTextAsync(tokenPath)).Trim();
         if (token == "PUT_YOUR_BOT_TOKEN_HERE") return;

@@ -14,7 +14,7 @@ namespace GuildTracker.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    private readonly JsonDataService _dataService = new();
+    private readonly MongoDataService _dataService = new();
     private readonly ExportService _exportService = new();
 
     public MainViewModel()
@@ -22,6 +22,7 @@ public class MainViewModel : ViewModelBase
         AddMemberCommand = new RelayCommand(_ => AddMember());
         RemoveMemberCommand = new RelayCommand(p => RemoveMembers(p));
         SaveCommand = new RelayCommand(async _ => await SaveAllAsync());
+        RefreshCommand = new RelayCommand(async _ => await RefreshAsync());
         ExportMembersCommand = new RelayCommand(_ => ExportMembers());
         ExportAttendanceCommand = new RelayCommand(_ => ExportAttendance());
         UpdateCpCommand = new RelayCommand(_ => UpdateCombatPower());
@@ -47,7 +48,6 @@ public class MainViewModel : ViewModelBase
         RemoveRoleCommand = new RelayCommand(_ => RemoveRole(), _ => !string.IsNullOrEmpty(SelectedRoleToDelete));
         AddEventCommand = new RelayCommand(_ => AddEvent());
         RemoveEventCommand = new RelayCommand(_ => RemoveEvent(), _ => SelectedEventToDelete != null);
-        OpenDataFolderCommand = new RelayCommand(_ => OpenDataFolder());
 
         _ = LoadAllAsync();
     }
@@ -193,7 +193,6 @@ public class MainViewModel : ViewModelBase
     private GuildEvent? _selectedEventToDelete;
     public GuildEvent? SelectedEventToDelete { get => _selectedEventToDelete; set => SetProperty(ref _selectedEventToDelete, value); }
 
-    public string DataFolderPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
 
     private string _statusMessage = "Ready";
     public string StatusMessage { get => _statusMessage; set => SetProperty(ref _statusMessage, value); }
@@ -258,7 +257,8 @@ public class MainViewModel : ViewModelBase
     public ICommand RemoveRoleCommand { get; }
     public ICommand AddEventCommand { get; }
     public ICommand RemoveEventCommand { get; }
-    public ICommand OpenDataFolderCommand { get; }
+    public ICommand RefreshCommand { get; }
+
 
     // ==================== DATA ====================
 
@@ -325,6 +325,12 @@ public class MainViewModel : ViewModelBase
         await _dataService.SaveRolesAsync(AvailableRoles.ToList());
         await _dataService.SaveEventsAsync(AvailableEvents.ToList());
         StatusMessage = $"Auto-saved at {DateTime.Now:HH:mm:ss}";
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadAllAsync();
+        StatusMessage = $"Refreshed at {DateTime.Now:HH:mm:ss}";
     }
 
     // ==================== MEMBERS ====================
@@ -719,10 +725,6 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    private void OpenDataFolder()
-    {
-        Process.Start("explorer.exe", DataFolderPath);
-    }
 
     // ==================== EXPORT ====================
 

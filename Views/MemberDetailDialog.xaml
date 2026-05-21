@@ -17,6 +17,88 @@
             <Setter Property="Foreground" Value="#cdd6f4"/>
             <Setter Property="FontSize" Value="14"/>
         </Style>
+        <Style TargetType="TextBox" x:Key="EditBox">
+            <Setter Property="Background" Value="#45475a"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+            <Setter Property="BorderBrush" Value="#585b70"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="#cdd6f4"/>
+        </Style>
+        <Style TargetType="ComboBox" x:Key="EditCombo">
+            <Setter Property="Background" Value="#45475a"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+            <Setter Property="BorderBrush" Value="#585b70"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="#45475a" BorderBrush="#585b70" BorderThickness="1" CornerRadius="4" Padding="8,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="20"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Path Grid.Column="1" Data="M0,0 L4,4 8,0" Stroke="#cdd6f4" StrokeThickness="1.5"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              Margin="10,6,28,6" VerticalAlignment="Center">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#cdd6f4"/>
+                                        <Setter Property="Margin" Value="0"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                            <Popup Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Grid MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border Background="#313244" BorderBrush="#585b70" BorderThickness="1" CornerRadius="4" Padding="2">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <StackPanel IsItemsHost="True"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="3">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" Value="#45475a"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#585b70"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Border Padding="24">
@@ -27,7 +109,7 @@
                 <TextBlock Text="{Binding Role}" FontSize="14" Foreground="#a6adc8" VerticalAlignment="Bottom" Margin="12,0,0,2"/>
             </StackPanel>
 
-            <!-- Info Grid -->
+            <!-- Editable Fields -->
             <Border Background="#313244" CornerRadius="8" Padding="16" Margin="0,0,0,12">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -42,68 +124,64 @@
                         <RowDefinition/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Grid.Column="0">
+                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,0">
                         <TextBlock Text="Class" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding Class}" Style="{StaticResource Value}" FontWeight="SemiBold"
-                                   Foreground="{Binding ClassColor}"/>
+                        <ComboBox x:Name="ClassCombo" Style="{StaticResource EditCombo}"
+                                  ItemsSource="{Binding Classes}" SelectedItem="{Binding Class, Mode=TwoWay}"/>
                     </StackPanel>
                     <StackPanel Grid.Row="0" Grid.Column="1">
                         <TextBlock Text="Combat Power" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding CombatPower, StringFormat=N0}" Style="{StaticResource Value}" Foreground="#89b4fa"/>
+                        <TextBox x:Name="CpBox" Style="{StaticResource EditBox}" 
+                                 Text="{Binding CombatPower, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="0">
-                        <TextBlock Text="Join Date" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding JoinDate, StringFormat='{}{0:MMM dd, yyyy}'}" Style="{StaticResource Value}"/>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="Role" Style="{StaticResource Label}"/>
+                        <ComboBox x:Name="RoleCombo" Style="{StaticResource EditCombo}"
+                                  ItemsSource="{Binding Roles}" SelectedItem="{Binding Role, Mode=TwoWay}"/>
                     </StackPanel>
                     <StackPanel Grid.Row="1" Grid.Column="1">
                         <TextBlock Text="Discord ID" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding DiscordId}" Style="{StaticResource Value}"/>
+                        <TextBox Style="{StaticResource EditBox}" 
+                                 Text="{Binding DiscordId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="2" Grid.Column="0">
-                        <TextBlock Text="Total Absences" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding TotalAbsences}" Style="{StaticResource Value}" Foreground="#f38ba8"/>
+                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="Join Date" Style="{StaticResource Label}"/>
+                        <TextBlock Text="{Binding JoinDate, StringFormat='{}{0:MMM dd, yyyy}'}" Style="{StaticResource Value}"/>
                     </StackPanel>
                     <StackPanel Grid.Row="2" Grid.Column="1">
-                        <TextBlock Text="MVP Awards" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding TotalMvps}" Style="{StaticResource Value}" Foreground="#f9e2af"/>
+                        <TextBlock Text="Status" Style="{StaticResource Label}"/>
+                        <TextBlock Style="{StaticResource Value}">
+                            <TextBlock.Text>
+                                <Binding Path="TotalAbsences" StringFormat="{}{0} absences"/>
+                            </TextBlock.Text>
+                        </TextBlock>
                     </StackPanel>
 
                     <StackPanel Grid.Row="3" Grid.Column="0">
-                        <TextBlock Text="God of War" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding TotalGodOfWar}" Style="{StaticResource Value}" Foreground="#f38ba8"/>
+                        <TextBlock Text="MVP Awards" Style="{StaticResource Label}"/>
+                        <TextBlock Text="{Binding TotalMvps}" Style="{StaticResource Value}" Foreground="#f9e2af"/>
                     </StackPanel>
                     <StackPanel Grid.Row="3" Grid.Column="1">
-                        <TextBlock Text="Best Support" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding TotalBestSupport}" Style="{StaticResource Value}" Foreground="#94e2d5"/>
+                        <TextBlock Text="God of War / Best Support" Style="{StaticResource Label}"/>
+                        <TextBlock Style="{StaticResource Value}">
+                            <Run Text="{Binding TotalGodOfWar, Mode=OneWay}" Foreground="#f38ba8"/>
+                            <Run Text=" / "/>
+                            <Run Text="{Binding TotalBestSupport, Mode=OneWay}" Foreground="#94e2d5"/>
+                        </TextBlock>
                     </StackPanel>
 
                     <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2">
                         <TextBlock Text="Notes" Style="{StaticResource Label}"/>
-                        <TextBlock Text="{Binding Notes}" Style="{StaticResource Value}" TextWrapping="Wrap"
-                                   Foreground="#a6adc8" FontStyle="Italic"/>
+                        <TextBox Style="{StaticResource EditBox}" 
+                                 Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 TextWrapping="Wrap" AcceptsReturn="True" Height="60"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- MVP History -->
-            <TextBlock Text="🏆 MVP Awards" FontSize="14" FontWeight="SemiBold" Foreground="#f9e2af" Margin="0,4,0,6"/>
-            <Border Background="#313244" CornerRadius="8" Padding="12" Margin="0,0,0,12" MaxHeight="120">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding MvpHistory}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Foreground="#f9e2af" Margin="0,1">
-                                    <Run Text="{Binding EventName}"/> — <Run Text="{Binding EventDate, StringFormat='{}{0:MMM dd}'}"/>
-                                </TextBlock>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Border>
-
-            <!-- Absence History - Selectable with clear options -->
+            <!-- Absence History -->
             <StackPanel Orientation="Horizontal" Margin="0,4,0,6">
                 <TextBlock Text="✗ Absence History" FontSize="14" FontWeight="SemiBold" Foreground="#f38ba8"/>
                 <TextBlock Text="{Binding TotalAbsences, StringFormat=' ({0})'}" FontSize="14" Foreground="#f38ba8"/>
@@ -171,22 +249,39 @@
                 </Button>
             </StackPanel>
 
-            <!-- Close -->
-            <Button Content="Close" Click="Close_Click" HorizontalAlignment="Right" Padding="16,8"
-                    Background="#45475a" Foreground="#cdd6f4" BorderThickness="0" Cursor="Hand">
-                <Button.Template>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#585b70"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" Click="Close_Click" Padding="16,8" Margin="0,0,8,0"
+                        Background="#45475a" Foreground="#cdd6f4" BorderThickness="0" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#585b70"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                <Button Content="Save Changes" Click="Save_Click" Padding="16,8"
+                        Background="#a6e3a1" Foreground="#1e1e2e" FontWeight="SemiBold" BorderThickness="0" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#c4edc4"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
         </StackPanel>
     </Border>
 </Window>

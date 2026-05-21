@@ -62,6 +62,18 @@
               "target": "Package",
               "version": "[3.13.0, )"
             },
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[8.0.1, )"
+            },
+            "MongoDB.Driver": {
+              "target": "Package",
+              "version": "[2.28.0, )"
+            },
             "System.Text.Json": {
               "target": "Package",
               "version": "[8.0.5, )"

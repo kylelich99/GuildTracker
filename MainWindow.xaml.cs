@@ -79,16 +79,25 @@ public partial class MainWindow : Window
         var vm = DataContext as MainViewModel;
         if (vm?.SelectedMember == null) return;
 
+        var classes = vm.AvailableClasses.Where(c => c != "All").ToList();
+        var roles = vm.AvailableRoles.ToList();
+
         var dialog = new MemberDetailDialog(
             vm.SelectedMember,
             vm.AttendanceRecords,
-            vm.CpHistory.ToList())
+            vm.CpHistory.ToList(),
+            classes,
+            roles)
         {
             Owner = this
         };
         dialog.ShowDialog();
-        vm.UpdateDashboardPublic();
-        vm.RefreshMemberList();
+
+        if (dialog.WasSaved)
+        {
+            vm.UpdateDashboardPublic();
+            vm.RefreshMemberList();
+        }
     }
 }
 

@@ -239,6 +239,7 @@
                     <Separator Margin="8,16" Background="#45475a"/>
                     
                     <Button Content="💾 Save All" Style="{StaticResource NavButton}" Command="{Binding SaveCommand}"/>
+                    <Button Content="🔄 Refresh" Style="{StaticResource NavButton}" Command="{Binding RefreshCommand}"/>
                     <Button Content="📤 Export Members" Style="{StaticResource NavButton}" Command="{Binding ExportMembersCommand}"/>
                     <Button Content="📤 Export Attendance" Style="{StaticResource NavButton}" Command="{Binding ExportAttendanceCommand}"/>
                 </StackPanel>
@@ -412,6 +413,7 @@
                           SelectedItem="{Binding SelectedMember}"
                           SelectionMode="Extended"
                           AutoGenerateColumns="False" CanUserAddRows="False"
+                          IsReadOnly="True"
                           Background="#313244" Foreground="#cdd6f4"
                           RowBackground="#313244" AlternatingRowBackground="#3b3d50"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#45475a"
@@ -826,16 +828,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Data Info -->
-                        <Border Style="{StaticResource CardBorder}" Margin="6,12,6,6">
-                            <StackPanel>
-                                <TextBlock Text="Data Storage" FontSize="16" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,12"/>
-                                <TextBlock Text="{Binding DataFolderPath}" Foreground="#a6adc8" TextWrapping="Wrap"/>
-                                <Button Content="Open Data Folder" Style="{StaticResource ActionButton}" 
-                                        Margin="0,12,0,0" HorizontalAlignment="Left"
-                                        Command="{Binding OpenDataFolderCommand}"/>
-                            </StackPanel>
-                        </Border>
+
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
