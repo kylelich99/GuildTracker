@@ -36,8 +36,10 @@ Connection settings are in `appsettings.json`:
 - Add/edit/remove guild members
 - Track attendance per event with weekly scheduling
 - Mark MVP, God of War, Best Support awards
-- Combat Power tracking with history and trends
+- Combat Power tracking with history
 - Auction distribution with randomizer (configurable item types, max per player, weekly exclusion)
+- Priority system — mark players as priority for auction (sorted by CP)
+- Missed players view — see who didn't receive items that week
 - Shared database — vice leaders see the same data in real-time
 - Refresh button to pull latest changes
 - Export to Excel (members, attendance, auction)

@@ -19,4 +19,5 @@ public class GuildMember
     public bool IsActive { get; set; } = true;
     public int AbsenceCount { get; set; }
     public string CpTrend { get; set; } = string.Empty; // "↑", "↓", "—"
+    public bool IsPriority { get; set; }
 }

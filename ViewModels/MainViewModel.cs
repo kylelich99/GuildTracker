@@ -58,6 +58,8 @@ public class MainViewModel : ViewModelBase
         RemoveAuctionItemTypeCommand = new RelayCommand(_ => RemoveAuctionItemType(), _ => SelectedAuctionItemTypeToDelete != null);
         AuctionPrevWeekCommand = new RelayCommand(_ => AuctionWeekStart = AuctionWeekStart.AddDays(-7));
         AuctionNextWeekCommand = new RelayCommand(_ => AuctionWeekStart = AuctionWeekStart.AddDays(7));
+        TogglePriorityCommand = new RelayCommand(p => TogglePriority(p));
+        ShowMissedPlayersCommand = new RelayCommand(_ => ShowMissedPlayers());
 
         _ = LoadAllAsync();
     }
@@ -275,6 +277,8 @@ public class MainViewModel : ViewModelBase
     public ICommand RemoveAuctionItemTypeCommand { get; }
     public ICommand AuctionPrevWeekCommand { get; }
     public ICommand AuctionNextWeekCommand { get; }
+    public ICommand TogglePriorityCommand { get; }
+    public ICommand ShowMissedPlayersCommand { get; }
 
 
     // ==================== DATA ====================
@@ -790,15 +794,15 @@ public class MainViewModel : ViewModelBase
     public ObservableCollection<AuctionEventSetup> AuctionEventSetups { get; } = new();
 
     // Auction column header names
-    private string _auctionCol1 = "-";
+    private string _auctionCol1 = "";
     public string AuctionCol1 { get => _auctionCol1; set => SetProperty(ref _auctionCol1, value); }
-    private string _auctionCol2 = "-";
+    private string _auctionCol2 = "";
     public string AuctionCol2 { get => _auctionCol2; set => SetProperty(ref _auctionCol2, value); }
-    private string _auctionCol3 = "-";
+    private string _auctionCol3 = "";
     public string AuctionCol3 { get => _auctionCol3; set => SetProperty(ref _auctionCol3, value); }
-    private string _auctionCol4 = "-";
+    private string _auctionCol4 = "";
     public string AuctionCol4 { get => _auctionCol4; set => SetProperty(ref _auctionCol4, value); }
-    private string _auctionCol5 = "-";
+    private string _auctionCol5 = "";
     public string AuctionCol5 { get => _auctionCol5; set => SetProperty(ref _auctionCol5, value); }
 
     private string _auctionSummary = string.Empty;
@@ -856,11 +860,11 @@ public class MainViewModel : ViewModelBase
 
         // Update column headers
         var names = AuctionItemTypes.Select(t => t.Name).ToList();
-        AuctionCol1 = names.Count > 0 ? names[0] : "-";
-        AuctionCol2 = names.Count > 1 ? names[1] : "-";
-        AuctionCol3 = names.Count > 2 ? names[2] : "-";
-        AuctionCol4 = names.Count > 3 ? names[3] : "-";
-        AuctionCol5 = names.Count > 4 ? names[4] : "-";
+        AuctionCol1 = names.Count > 0 ? names[0] : "";
+        AuctionCol2 = names.Count > 1 ? names[1] : "";
+        AuctionCol3 = names.Count > 2 ? names[2] : "";
+        AuctionCol4 = names.Count > 3 ? names[3] : "";
+        AuctionCol5 = names.Count > 4 ? names[4] : "";
     }
 
     private void LoadAuctionResultsForWeek()
@@ -870,7 +874,13 @@ public class MainViewModel : ViewModelBase
         var result = AuctionResults.FirstOrDefault(r =>
             r.WeekStart.ToLocalTime().Date == monday && r.EventName == SelectedAuctionEvent);
 
-        if (result == null || result.Distributions.Count == 0)
+        if (result == null)
+        {
+            AuctionSummary = "No results yet.";
+            return;
+        }
+
+        if (result.Distributions.Count == 0)
         {
             AuctionSummary = "No results yet.";
             return;
@@ -942,7 +952,7 @@ public class MainViewModel : ViewModelBase
             return;
         }
 
-        // Run randomizer
+        // Run randomizer — priority members first (sorted by CP desc), then rest randomized
         var distributions = new List<AuctionDistribution>();
         var rng = new Random();
 
@@ -950,30 +960,31 @@ public class MainViewModel : ViewModelBase
         {
             var remaining = setup.TotalAvailable;
             var playerCounts = new Dictionary<string, int>();
-            var shuffled = eligibleMembers.OrderBy(_ => rng.Next()).ToList();
+            var priorityMembers = eligibleMembers.Where(m => m.IsPriority).OrderByDescending(m => m.CombatPower).ToList();
+            var normalMembers = eligibleMembers.Where(m => !m.IsPriority).OrderBy(_ => rng.Next()).ToList();
+            var ordered = priorityMembers.Concat(normalMembers).ToList();
 
-            while (remaining > 0 && shuffled.Count > 0)
+            while (remaining > 0 && ordered.Count > 0)
             {
-                foreach (var member in shuffled.ToList())
+                foreach (var member in ordered.ToList())
                 {
                     if (remaining <= 0) break;
 
                     playerCounts.TryGetValue(member.Id, out int current);
                     if (current >= setup.MaxPerPlayer)
                     {
-                        shuffled.Remove(member);
+                        ordered.Remove(member);
                         continue;
                     }
 
                     var give = Math.Min(setup.MaxPerPlayer - current, remaining);
-                    if (give > 1) give = 1; // distribute 1 at a time for fairness
+                    if (give > 1) give = 1;
 
                     playerCounts[member.Id] = current + give;
                     remaining -= give;
                 }
 
-                // Remove maxed out players
-                shuffled.RemoveAll(m => playerCounts.GetValueOrDefault(m.Id) >= setup.MaxPerPlayer);
+                ordered.RemoveAll(m => playerCounts.GetValueOrDefault(m.Id) >= setup.MaxPerPlayer);
             }
 
             foreach (var kvp in playerCounts)
@@ -1084,6 +1095,40 @@ public class MainViewModel : ViewModelBase
         AuctionItemTypes.Remove(SelectedAuctionItemTypeToDelete);
         SelectedAuctionItemTypeToDelete = null;
         InitAuctionEventSetups();
+    }
+
+    private void TogglePriority(object? parameter)
+    {
+        var selectedItems = parameter as System.Collections.IList;
+        if (selectedItems == null || selectedItems.Count == 0)
+        {
+            if (SelectedMember != null)
+                SelectedMember.IsPriority = !SelectedMember.IsPriority;
+        }
+        else
+        {
+            foreach (GuildMember m in selectedItems.Cast<GuildMember>().ToList())
+                m.IsPriority = !m.IsPriority;
+        }
+        ApplyFilter();
+        _ = AutoSaveAsync();
+    }
+
+    private void ShowMissedPlayers()
+    {
+        var monday = GetMonday(AuctionWeekStart).Date;
+        var allWinners = AuctionResults
+            .Where(r => r.WeekStart.ToLocalTime().Date == monday)
+            .SelectMany(r => r.Distributions)
+            .Select(d => d.MemberId)
+            .ToHashSet();
+
+        var missed = Members.Where(m => !allWinners.Contains(m.Id)).Select(m => m.IGN).ToList();
+
+        if (missed.Count == 0)
+            MessageBox.Show("All members received auction items this week!", "Auction", MessageBoxButton.OK, MessageBoxImage.Information);
+        else
+            MessageBox.Show($"Players who didn't receive items this week ({missed.Count}):\n\n• {string.Join("\n• ", missed)}", "Missed Players", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 }
 

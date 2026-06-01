@@ -28,6 +28,7 @@ public class AuctionResult
     public DateTime WeekStart { get; set; }
     public string EventName { get; set; } = string.Empty;
     public List<AuctionDistribution> Distributions { get; set; } = new();
+    public List<AuctionItemAllocation> Quantities { get; set; } = new();
 }
 
 public class AuctionDistribution

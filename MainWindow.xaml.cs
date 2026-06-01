@@ -44,6 +44,12 @@ public partial class MainWindow : Window
         vm?.RemoveMemberCommand.Execute(MembersGrid.SelectedItems);
     }
 
+    private void TogglePriority_Click(object sender, RoutedEventArgs e)
+    {
+        var vm = DataContext as MainViewModel;
+        vm?.TogglePriorityCommand.Execute(MembersGrid.SelectedItems);
+    }
+
     private void MarkAbsent_Click(object sender, RoutedEventArgs e)
     {
         var vm = DataContext as MainViewModel;
