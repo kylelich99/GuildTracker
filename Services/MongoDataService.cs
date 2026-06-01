@@ -24,6 +24,7 @@ public class MongoDataService
     private IMongoCollection<GuildMember> Members => _db.GetCollection<GuildMember>("GuildMembers");
     private IMongoCollection<AttendanceRecord> Attendance => _db.GetCollection<AttendanceRecord>("AttendanceRecords");
     private IMongoCollection<CpRecord> CpHistory => _db.GetCollection<CpRecord>("CpRecords");
+    private IMongoCollection<AuctionResult> AuctionResults => _db.GetCollection<AuctionResult>("AuctionResults");
     private IMongoCollection<ConfigDoc> Configs => _db.GetCollection<ConfigDoc>("Configs");
 
     // --- Members ---
@@ -140,6 +141,35 @@ public class MongoDataService
             new ConfigDoc { Key = "events", Events = events },
             new ReplaceOptions { IsUpsert = true });
     }
+
+    // --- Auction Item Types ---
+    public async Task<List<AuctionItemType>> LoadAuctionItemTypesAsync()
+    {
+        var doc = await Configs.Find(c => c.Key == "auctionItemTypes").FirstOrDefaultAsync();
+        return doc?.AuctionItemTypes ?? new List<AuctionItemType>();
+    }
+
+    public async Task SaveAuctionItemTypesAsync(List<AuctionItemType> itemTypes)
+    {
+        await Configs.ReplaceOneAsync(
+            c => c.Key == "auctionItemTypes",
+            new ConfigDoc { Key = "auctionItemTypes", AuctionItemTypes = itemTypes },
+            new ReplaceOptions { IsUpsert = true });
+    }
+
+    // --- Auction Results ---
+    public async Task<List<AuctionResult>> LoadAuctionResultsAsync() =>
+        await AuctionResults.Find(_ => true).ToListAsync();
+
+    public async Task SaveAuctionResultAsync(AuctionResult result)
+    {
+        var filter = Builders<AuctionResult>.Filter.And(
+            Builders<AuctionResult>.Filter.Gte(r => r.WeekStart, result.WeekStart.Date),
+            Builders<AuctionResult>.Filter.Lt(r => r.WeekStart, result.WeekStart.Date.AddDays(1)),
+            Builders<AuctionResult>.Filter.Eq(r => r.EventName, result.EventName)
+        );
+        await AuctionResults.ReplaceOneAsync(filter, result, new ReplaceOptions { IsUpsert = true });
+    }
 }
 
 /// <summary>
@@ -151,4 +181,5 @@ public class ConfigDoc
     public string Key { get; set; } = string.Empty;
     public List<string>? Values { get; set; }
     public List<GuildEvent>? Events { get; set; }
+    public List<AuctionItemType>? AuctionItemTypes { get; set; }
 }

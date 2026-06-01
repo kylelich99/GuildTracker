@@ -235,6 +235,8 @@
                             Command="{Binding NavigateCommand}" CommandParameter="Attendance"/>
                     <Button Content="⚡ Combat Power" Style="{StaticResource NavButton}" 
                             Command="{Binding NavigateCommand}" CommandParameter="CombatPower"/>
+                    <Button Content="🎲 Auction" Style="{StaticResource NavButton}" 
+                            Command="{Binding NavigateCommand}" CommandParameter="Auction"/>
                     
                     <Separator Margin="8,16" Background="#45475a"/>
                     
@@ -716,6 +718,117 @@
                 </Grid>
             </Grid>
 
+            <!-- ==================== AUCTION ==================== -->
+            <Grid Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Auction}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Auction Distribution" FontSize="24" FontWeight="Bold" Foreground="#cdd6f4" Margin="0,0,0,12"/>
+
+                <!-- Week nav + Event selector -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+                    <Button Content="◀" Style="{StaticResource ActionButton}" Background="#45475a" Foreground="#cdd6f4"
+                            Padding="8,6" Margin="0,0,4,0" Command="{Binding AuctionPrevWeekCommand}"/>
+                    <TextBlock Text="{Binding AuctionWeekLabel}" Foreground="#cdd6f4" VerticalAlignment="Center" Margin="8,0" FontSize="14"/>
+                    <Button Content="▶" Style="{StaticResource ActionButton}" Background="#45475a" Foreground="#cdd6f4"
+                            Padding="8,6" Margin="4,0,16,0" Command="{Binding AuctionNextWeekCommand}"/>
+                    <ComboBox Width="180" ItemsSource="{Binding EventTabNames}" SelectedItem="{Binding SelectedAuctionEvent}"/>
+                </StackPanel>
+
+                <!-- Item setup + Actions -->
+                <Border Grid.Row="2" Style="{StaticResource CardBorder}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Set Item Quantities" FontSize="14" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,8"/>
+                        <ItemsControl ItemsSource="{Binding AuctionEventSetups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,4">
+                                        <TextBlock Text="{Binding ItemName}" Foreground="#cdd6f4" Width="180" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Qty:" Foreground="#a6adc8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <TextBox Width="60" Text="{Binding TotalAvailable, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Text="{Binding MaxPerPlayer, StringFormat='(max {0}/player)'}" 
+                                                   Foreground="#585b70" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="🎲 Randomize" Style="{StaticResource ActionButton}" 
+                                    Background="#cba6f7" Margin="0,0,8,0"
+                                    Command="{Binding RunAuctionCommand}"/>
+                            <Button Content="🗑 Clear" Style="{StaticResource DangerButton}" Margin="0,0,8,0"
+                                    Command="{Binding ClearAuctionCommand}"/>
+                            <Button Content="📤 Export" Style="{StaticResource ActionButton}" 
+                                    Command="{Binding ExportAuctionCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Summary -->
+                <TextBlock Grid.Row="3" Text="{Binding AuctionSummary}" Foreground="#a6e3a1" FontSize="12" Margin="0,0,0,8"/>
+
+                <!-- Pivot Results -->
+                <DataGrid x:Name="AuctionGrid" Grid.Row="4" ItemsSource="{Binding CurrentAuctionPivot}"
+                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                          Background="#313244" Foreground="#cdd6f4"
+                          RowBackground="#313244" AlternatingRowBackground="#3b3d50"
+                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#45475a"
+                          BorderBrush="#45475a" HeadersVisibility="Column" RowHeaderWidth="0">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#181825"/>
+                            <Setter Property="Foreground" Value="#cba6f7"/>
+                            <Setter Property="Padding" Value="8,6"/>
+                            <Setter Property="BorderBrush" Value="#45475a"/>
+                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="IGN" Binding="{Binding IGN}" Width="150"/>
+                        <DataGridTextColumn Binding="{Binding Item1Qty}" Width="100">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DataContext.AuctionCol1, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Binding="{Binding Item2Qty}" Width="100">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DataContext.AuctionCol2, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Binding="{Binding Item3Qty}" Width="100">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DataContext.AuctionCol3, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Binding="{Binding Item4Qty}" Width="100">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DataContext.AuctionCol4, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Binding="{Binding Item5Qty}" Width="100">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DataContext.AuctionCol5, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
             <!-- ==================== SETTINGS ==================== -->
             <Grid Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Settings}">
                 <Grid.RowDefinitions>
@@ -825,6 +938,43 @@
                                 <Button Content="🗑 Remove Selected Event" Style="{StaticResource DangerButton}" 
                                         Margin="0,12,0,0" HorizontalAlignment="Left"
                                         Command="{Binding RemoveEventCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Auction Item Types Configuration -->
+                        <Border Style="{StaticResource CardBorder}" Margin="6,12,6,6">
+                            <StackPanel>
+                                <TextBlock Text="Auction Item Types" FontSize="16" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,12"/>
+                                <TextBlock Text="Configure item types for auction distribution and their max per player limit." Foreground="#a6adc8" Margin="0,0,0,12" TextWrapping="Wrap"/>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <TextBox Width="160" Text="{Binding NewAuctionItemTypeName, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,8,0"/>
+                                    <TextBlock Text="Max/player:" Foreground="#a6adc8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBox Width="50" Text="{Binding NewAuctionItemTypeMax, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,8,0"/>
+                                    <Button Content="+ Add Item Type" Style="{StaticResource ActionButton}" 
+                                            Command="{Binding AddAuctionItemTypeCommand}"/>
+                                </StackPanel>
+
+                                <ListBox ItemsSource="{Binding AuctionItemTypes}" 
+                                         SelectedItem="{Binding SelectedAuctionItemTypeToDelete}"
+                                         Background="#45475a" Foreground="#cdd6f4" 
+                                         BorderBrush="#585b70" MaxHeight="200"
+                                         Padding="4">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}" Foreground="#cdd6f4" Padding="4,2" Width="180"/>
+                                                <TextBlock Text="{Binding MaxPerPlayer, StringFormat='max {0}/player'}" Foreground="#a6adc8" Padding="4,2"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <Button Content="🗑 Remove Selected" Style="{StaticResource DangerButton}" 
+                                        Margin="0,12,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding RemoveAuctionItemTypeCommand}"/>
                             </StackPanel>
                         </Border>
 

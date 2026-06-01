@@ -9,6 +9,7 @@ using GuildTracker.Models;
 using GuildTracker.Services;
 using GuildTracker.Views;
 using Microsoft.Win32;
+using MongoDB.Bson;
 
 namespace GuildTracker.ViewModels;
 
@@ -48,6 +49,15 @@ public class MainViewModel : ViewModelBase
         RemoveRoleCommand = new RelayCommand(_ => RemoveRole(), _ => !string.IsNullOrEmpty(SelectedRoleToDelete));
         AddEventCommand = new RelayCommand(_ => AddEvent());
         RemoveEventCommand = new RelayCommand(_ => RemoveEvent(), _ => SelectedEventToDelete != null);
+
+        // Auction
+        RunAuctionCommand = new RelayCommand(async _ => await RunAuctionAsync());
+        ClearAuctionCommand = new RelayCommand(async _ => await ClearAuctionAsync());
+        ExportAuctionCommand = new RelayCommand(_ => ExportAuction());
+        AddAuctionItemTypeCommand = new RelayCommand(_ => AddAuctionItemType());
+        RemoveAuctionItemTypeCommand = new RelayCommand(_ => RemoveAuctionItemType(), _ => SelectedAuctionItemTypeToDelete != null);
+        AuctionPrevWeekCommand = new RelayCommand(_ => AuctionWeekStart = AuctionWeekStart.AddDays(-7));
+        AuctionNextWeekCommand = new RelayCommand(_ => AuctionWeekStart = AuctionWeekStart.AddDays(7));
 
         _ = LoadAllAsync();
     }
@@ -258,6 +268,13 @@ public class MainViewModel : ViewModelBase
     public ICommand AddEventCommand { get; }
     public ICommand RemoveEventCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand RunAuctionCommand { get; }
+    public ICommand ClearAuctionCommand { get; }
+    public ICommand ExportAuctionCommand { get; }
+    public ICommand AddAuctionItemTypeCommand { get; }
+    public ICommand RemoveAuctionItemTypeCommand { get; }
+    public ICommand AuctionPrevWeekCommand { get; }
+    public ICommand AuctionNextWeekCommand { get; }
 
 
     // ==================== DATA ====================
@@ -270,6 +287,8 @@ public class MainViewModel : ViewModelBase
         var classes = await _dataService.LoadClassesAsync();
         var roles = await _dataService.LoadRolesAsync();
         var events = await _dataService.LoadEventsAsync();
+        var auctionItemTypes = await _dataService.LoadAuctionItemTypesAsync();
+        var auctionResults = await _dataService.LoadAuctionResultsAsync();
 
         Members.Clear();
         foreach (var m in members) Members.Add(m);
@@ -295,9 +314,20 @@ public class MainViewModel : ViewModelBase
             EventTabNames.Add(e.Name);
         }
 
-        if (EventTabNames.Count > 0)
-            SelectedEvent = EventTabNames[0];
+        AuctionItemTypes.Clear();
+        foreach (var t in auctionItemTypes) AuctionItemTypes.Add(t);
 
+        AuctionResults.Clear();
+        foreach (var r in auctionResults) AuctionResults.Add(r);
+
+        if (EventTabNames.Count > 0)
+        {
+            SelectedEvent = EventTabNames[0];
+            if (string.IsNullOrEmpty(SelectedAuctionEvent))
+                SelectedAuctionEvent = EventTabNames[0];
+        }
+
+        InitAuctionEventSetups();
         ApplyFilter();
         UpdateDashboard();
     }
@@ -310,8 +340,11 @@ public class MainViewModel : ViewModelBase
         await _dataService.SaveClassesAsync(AvailableClasses.Where(c => c != "All").ToList());
         await _dataService.SaveRolesAsync(AvailableRoles.ToList());
         await _dataService.SaveEventsAsync(AvailableEvents.ToList());
+        await _dataService.SaveAuctionItemTypesAsync(AuctionItemTypes.ToList());
+        var savedEvent = SelectedAuctionEvent;
         EventTabNames.Clear();
         foreach (var e in AvailableEvents) EventTabNames.Add(e.Name);
+        SelectedAuctionEvent = savedEvent;
         StatusMessage = $"Saved at {DateTime.Now:HH:mm:ss}";
         MessageBox.Show("Data saved successfully!", "Guild Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
     }
@@ -324,6 +357,7 @@ public class MainViewModel : ViewModelBase
         await _dataService.SaveClassesAsync(AvailableClasses.Where(c => c != "All").ToList());
         await _dataService.SaveRolesAsync(AvailableRoles.ToList());
         await _dataService.SaveEventsAsync(AvailableEvents.ToList());
+        await _dataService.SaveAuctionItemTypesAsync(AuctionItemTypes.ToList());
         StatusMessage = $"Auto-saved at {DateTime.Now:HH:mm:ss}";
     }
 
@@ -747,6 +781,310 @@ public class MainViewModel : ViewModelBase
             MessageBox.Show("Attendance exported!", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
+
+    // ==================== AUCTION ====================
+
+    public ObservableCollection<AuctionItemType> AuctionItemTypes { get; } = new();
+    public ObservableCollection<AuctionResult> AuctionResults { get; } = new();
+    public ObservableCollection<AuctionPivotRow> CurrentAuctionPivot { get; } = new();
+    public ObservableCollection<AuctionEventSetup> AuctionEventSetups { get; } = new();
+
+    // Auction column header names
+    private string _auctionCol1 = "-";
+    public string AuctionCol1 { get => _auctionCol1; set => SetProperty(ref _auctionCol1, value); }
+    private string _auctionCol2 = "-";
+    public string AuctionCol2 { get => _auctionCol2; set => SetProperty(ref _auctionCol2, value); }
+    private string _auctionCol3 = "-";
+    public string AuctionCol3 { get => _auctionCol3; set => SetProperty(ref _auctionCol3, value); }
+    private string _auctionCol4 = "-";
+    public string AuctionCol4 { get => _auctionCol4; set => SetProperty(ref _auctionCol4, value); }
+    private string _auctionCol5 = "-";
+    public string AuctionCol5 { get => _auctionCol5; set => SetProperty(ref _auctionCol5, value); }
+
+    private string _auctionSummary = string.Empty;
+    public string AuctionSummary { get => _auctionSummary; set => SetProperty(ref _auctionSummary, value); }
+
+    private DateTime _auctionWeekStart = DateTime.Today;
+    public DateTime AuctionWeekStart
+    {
+        get => _auctionWeekStart;
+        set { SetProperty(ref _auctionWeekStart, value); LoadAuctionResultsForWeek(); OnPropertyChanged(nameof(AuctionWeekLabel)); }
+    }
+
+    public string AuctionWeekLabel
+    {
+        get
+        {
+            var monday = GetMonday(AuctionWeekStart);
+            var sunday = monday.AddDays(6);
+            var thisMonday = GetMonday(DateTime.Today);
+            if (monday == thisMonday) return "This Week";
+            if (monday == thisMonday.AddDays(-7)) return "Last Week";
+            if (monday == thisMonday.AddDays(7)) return "Next Week";
+            return $"{monday:MMM dd} - {sunday:MMM dd}";
+        }
+    }
+
+    private string _selectedAuctionEvent = string.Empty;
+    public string SelectedAuctionEvent
+    {
+        get => _selectedAuctionEvent;
+        set { SetProperty(ref _selectedAuctionEvent, value); LoadAuctionResultsForWeek(); }
+    }
+
+    private string _newAuctionItemTypeName = string.Empty;
+    public string NewAuctionItemTypeName { get => _newAuctionItemTypeName; set => SetProperty(ref _newAuctionItemTypeName, value); }
+
+    private int _newAuctionItemTypeMax = 1;
+    public int NewAuctionItemTypeMax { get => _newAuctionItemTypeMax; set => SetProperty(ref _newAuctionItemTypeMax, value); }
+
+    private AuctionItemType? _selectedAuctionItemTypeToDelete;
+    public AuctionItemType? SelectedAuctionItemTypeToDelete { get => _selectedAuctionItemTypeToDelete; set => SetProperty(ref _selectedAuctionItemTypeToDelete, value); }
+
+    private void InitAuctionEventSetups()
+    {
+        AuctionEventSetups.Clear();
+        foreach (var itemType in AuctionItemTypes)
+        {
+            AuctionEventSetups.Add(new AuctionEventSetup
+            {
+                ItemName = itemType.Name,
+                MaxPerPlayer = itemType.MaxPerPlayer,
+                TotalAvailable = 0
+            });
+        }
+
+        // Update column headers
+        var names = AuctionItemTypes.Select(t => t.Name).ToList();
+        AuctionCol1 = names.Count > 0 ? names[0] : "-";
+        AuctionCol2 = names.Count > 1 ? names[1] : "-";
+        AuctionCol3 = names.Count > 2 ? names[2] : "-";
+        AuctionCol4 = names.Count > 3 ? names[3] : "-";
+        AuctionCol5 = names.Count > 4 ? names[4] : "-";
+    }
+
+    private void LoadAuctionResultsForWeek()
+    {
+        CurrentAuctionPivot.Clear();
+        var monday = GetMonday(AuctionWeekStart).Date;
+        var result = AuctionResults.FirstOrDefault(r =>
+            r.WeekStart.ToLocalTime().Date == monday && r.EventName == SelectedAuctionEvent);
+
+        if (result == null || result.Distributions.Count == 0)
+        {
+            AuctionSummary = "No results yet.";
+            return;
+        }
+
+        // Build pivot: group by player
+        var grouped = result.Distributions.GroupBy(d => d.MemberIGN);
+        foreach (var g in grouped.OrderBy(g => g.Key))
+        {
+            var row = new AuctionPivotRow { IGN = g.Key };
+            foreach (var d in g)
+                row.ItemQuantities[d.ItemName] = d.Quantity;
+            CurrentAuctionPivot.Add(row);
+        }
+
+        // Summary
+        var lines = new List<string>();
+        foreach (var setup in AuctionEventSetups.Where(s => s.TotalAvailable > 0))
+        {
+            var distributed = result.Distributions
+                .Where(d => d.ItemName == setup.ItemName)
+                .Sum(d => d.Quantity);
+            var left = setup.TotalAvailable - distributed;
+            lines.Add($"{setup.ItemName}: {distributed}/{setup.TotalAvailable} given, {left} left");
+        }
+        lines.Add($"Players: {grouped.Count()}");
+        AuctionSummary = string.Join(" | ", lines);
+    }
+
+    private void UpdateAuctionSummary() => LoadAuctionResultsForWeek();
+
+    private async Task RunAuctionAsync()
+    {
+        if (string.IsNullOrEmpty(SelectedAuctionEvent)) return;
+        if (AuctionEventSetups.All(s => s.TotalAvailable == 0))
+        {
+            MessageBox.Show("Set item quantities first.", "Auction", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var monday = GetMonday(AuctionWeekStart);
+
+        // Get present members for this event on its scheduled date
+        var evt = AvailableEvents.FirstOrDefault(e => e.Name == SelectedAuctionEvent);
+        if (evt == null) return;
+
+        int eventOffset = ((int)evt.ScheduledDay + 6) % 7;
+        var eventDate = monday.AddDays(eventOffset);
+
+        var absentIds = AttendanceRecords
+            .Where(r => r.EventName == SelectedAuctionEvent && r.EventDate.Date == eventDate.Date && r.IsAbsent)
+            .Select(r => r.MemberId)
+            .ToHashSet();
+
+        var presentMembers = Members.Where(m => !absentIds.Contains(m.Id)).ToList();
+
+        // Exclude members who already won in earlier events this week
+        var earlierResults = AuctionResults
+            .Where(r => r.WeekStart.ToLocalTime().Date == monday.Date && r.EventName != SelectedAuctionEvent)
+            .SelectMany(r => r.Distributions)
+            .Select(d => d.MemberId)
+            .ToHashSet();
+
+        var eligibleMembers = presentMembers.Where(m => !earlierResults.Contains(m.Id)).ToList();
+
+        if (eligibleMembers.Count == 0)
+        {
+            MessageBox.Show("No eligible members for this event.", "Auction", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        // Run randomizer
+        var distributions = new List<AuctionDistribution>();
+        var rng = new Random();
+
+        foreach (var setup in AuctionEventSetups.Where(s => s.TotalAvailable > 0))
+        {
+            var remaining = setup.TotalAvailable;
+            var playerCounts = new Dictionary<string, int>();
+            var shuffled = eligibleMembers.OrderBy(_ => rng.Next()).ToList();
+
+            while (remaining > 0 && shuffled.Count > 0)
+            {
+                foreach (var member in shuffled.ToList())
+                {
+                    if (remaining <= 0) break;
+
+                    playerCounts.TryGetValue(member.Id, out int current);
+                    if (current >= setup.MaxPerPlayer)
+                    {
+                        shuffled.Remove(member);
+                        continue;
+                    }
+
+                    var give = Math.Min(setup.MaxPerPlayer - current, remaining);
+                    if (give > 1) give = 1; // distribute 1 at a time for fairness
+
+                    playerCounts[member.Id] = current + give;
+                    remaining -= give;
+                }
+
+                // Remove maxed out players
+                shuffled.RemoveAll(m => playerCounts.GetValueOrDefault(m.Id) >= setup.MaxPerPlayer);
+            }
+
+            foreach (var kvp in playerCounts)
+            {
+                var member = eligibleMembers.First(m => m.Id == kvp.Key);
+                distributions.Add(new AuctionDistribution
+                {
+                    MemberId = kvp.Key,
+                    MemberIGN = member.IGN,
+                    ItemName = setup.ItemName,
+                    Quantity = kvp.Value
+                });
+            }
+        }
+
+        // Save result
+        var result = new AuctionResult
+        {
+            WeekStart = monday.Date,
+            EventName = SelectedAuctionEvent,
+            Distributions = distributions
+        };
+
+        await _dataService.SaveAuctionResultAsync(result);
+
+        // Update local collection
+        var existing = AuctionResults.FirstOrDefault(r =>
+            r.WeekStart.ToLocalTime().Date == monday.Date && r.EventName == SelectedAuctionEvent);
+        if (existing != null) AuctionResults.Remove(existing);
+        AuctionResults.Add(result);
+
+        LoadAuctionResultsForWeek();
+        StatusMessage = $"Auction distributed for {SelectedAuctionEvent}";
+    }
+
+    private async Task ClearAuctionAsync()
+    {
+        if (string.IsNullOrEmpty(SelectedAuctionEvent)) return;
+        var monday = GetMonday(AuctionWeekStart);
+
+        var existing = AuctionResults.FirstOrDefault(r =>
+            r.WeekStart.ToLocalTime().Date == monday.Date && r.EventName == SelectedAuctionEvent);
+        if (existing == null)
+        {
+            MessageBox.Show("Nothing to clear.", "Auction", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var confirm = MessageBox.Show($"Clear auction results for {SelectedAuctionEvent} this week?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        AuctionResults.Remove(existing);
+        var emptyResult = new AuctionResult { WeekStart = monday.Date, EventName = SelectedAuctionEvent, Distributions = new() };
+        await _dataService.SaveAuctionResultAsync(emptyResult);
+
+        LoadAuctionResultsForWeek();
+        StatusMessage = $"Auction cleared for {SelectedAuctionEvent}";
+    }
+
+    private void ExportAuction()
+    {
+        if (CurrentAuctionPivot.Count == 0)
+        {
+            MessageBox.Show("No auction results to export.", "Export", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var dlg = new SaveFileDialog { Filter = "Excel Files|*.xlsx", FileName = $"Auction_{SelectedAuctionEvent}_{GetMonday(AuctionWeekStart):yyyyMMdd}.xlsx" };
+        if (dlg.ShowDialog() != true) return;
+
+        var wb = new ClosedXML.Excel.XLWorkbook();
+        var ws = wb.Worksheets.Add("Auction");
+
+        var itemNames = AuctionItemTypes.Select(t => t.Name).ToList();
+        ws.Cell(1, 1).Value = "IGN";
+        for (int i = 0; i < itemNames.Count; i++)
+            ws.Cell(1, i + 2).Value = itemNames[i];
+
+        int row = 2;
+        foreach (var pivot in CurrentAuctionPivot)
+        {
+            ws.Cell(row, 1).Value = pivot.IGN;
+            for (int i = 0; i < itemNames.Count; i++)
+                ws.Cell(row, i + 2).Value = pivot.ItemQuantities.GetValueOrDefault(itemNames[i], 0);
+            row++;
+        }
+
+        ws.Columns().AdjustToContents();
+        wb.SaveAs(dlg.FileName);
+        MessageBox.Show("Auction exported!", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void AddAuctionItemType()
+    {
+        if (string.IsNullOrWhiteSpace(NewAuctionItemTypeName)) return;
+        var trimmed = NewAuctionItemTypeName.Trim();
+        if (AuctionItemTypes.Any(t => t.Name == trimmed)) return;
+
+        AuctionItemTypes.Add(new AuctionItemType { Name = trimmed, MaxPerPlayer = NewAuctionItemTypeMax });
+        NewAuctionItemTypeName = string.Empty;
+        NewAuctionItemTypeMax = 1;
+        InitAuctionEventSetups();
+    }
+
+    private void RemoveAuctionItemType()
+    {
+        if (SelectedAuctionItemTypeToDelete == null) return;
+        AuctionItemTypes.Remove(SelectedAuctionItemTypeToDelete);
+        SelectedAuctionItemTypeToDelete = null;
+        InitAuctionEventSetups();
+    }
 }
 
 public class EventScheduleRow
@@ -794,4 +1132,29 @@ public class AttendanceMemberRow : ViewModelBase
         get => _isBestSupport;
         set => SetProperty(ref _isBestSupport, value);
     }
+}
+
+public class AuctionEventSetup : ViewModelBase
+{
+    public string ItemName { get; set; } = string.Empty;
+    public int MaxPerPlayer { get; set; }
+
+    private int _totalAvailable;
+    public int TotalAvailable
+    {
+        get => _totalAvailable;
+        set => SetProperty(ref _totalAvailable, value);
+    }
+}
+
+public class AuctionPivotRow
+{
+    public string IGN { get; set; } = string.Empty;
+    public Dictionary<string, int> ItemQuantities { get; set; } = new();
+    // Flattened for DataGrid display
+    public string Item1Qty => ItemQuantities.Count > 0 ? ItemQuantities.Values.ElementAt(0).ToString() : "";
+    public string Item2Qty => ItemQuantities.Count > 1 ? ItemQuantities.Values.ElementAt(1).ToString() : "";
+    public string Item3Qty => ItemQuantities.Count > 2 ? ItemQuantities.Values.ElementAt(2).ToString() : "";
+    public string Item4Qty => ItemQuantities.Count > 3 ? ItemQuantities.Values.ElementAt(3).ToString() : "";
+    public string Item5Qty => ItemQuantities.Count > 4 ? ItemQuantities.Values.ElementAt(4).ToString() : "";
 }

@@ -1,6 +1,8 @@
 ## Build results
 bin/
 obj/
+**/bin/
+**/obj/
 [Dd]ebug/
 [Rr]elease/
 x64/
@@ -68,3 +70,10 @@ Desktop.ini
 
 ## Data files (local runtime data)
 Data/*.json
+
+## Keep connection strings out of repo
+appsettings.json
+!appsettings.json.example
+
+## Release artifacts
+*.zip

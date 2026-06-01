@@ -1,3 +1,6 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace GuildTracker.Models;
 
 /// <summary>
@@ -6,6 +9,8 @@ namespace GuildTracker.Models;
 /// </summary>
 public class AttendanceRecord
 {
+    [BsonId]
+    public ObjectId Id { get; set; }
     public string MemberId { get; set; } = string.Empty;
     public DateTime EventDate { get; set; }
     public string EventName { get; set; } = string.Empty;
