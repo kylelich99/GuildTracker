@@ -45,6 +45,7 @@ public class BotDataService
     }
 }
 
+[MongoDB.Bson.Serialization.Attributes.BsonIgnoreExtraElements]
 public class ConfigDoc
 {
     [MongoDB.Bson.Serialization.Attributes.BsonId]
