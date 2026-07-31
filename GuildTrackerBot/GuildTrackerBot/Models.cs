@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace GuildTrackerBot;
 
+[BsonIgnoreExtraElements]
 public class GuildMember
 {
     [BsonId] public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -19,6 +20,7 @@ public class GuildMember
     public bool IsPriority { get; set; }
 }
 
+[BsonIgnoreExtraElements]
 public class CpRecord
 {
     [BsonId] public ObjectId Id { get; set; }
@@ -28,6 +30,7 @@ public class CpRecord
     public string Source { get; set; } = "Manual";
 }
 
+[BsonIgnoreExtraElements]
 public class AttendanceRecord
 {
     [BsonId] public ObjectId Id { get; set; }
