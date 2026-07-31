@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using GuildTracker.Models;
 
@@ -25,6 +26,7 @@ public class MongoDataService
     private IMongoCollection<AttendanceRecord> Attendance => _db.GetCollection<AttendanceRecord>("AttendanceRecords");
     private IMongoCollection<CpRecord> CpHistory => _db.GetCollection<CpRecord>("CpRecords");
     private IMongoCollection<AuctionResult> AuctionResults => _db.GetCollection<AuctionResult>("AuctionResults");
+    private IMongoCollection<AuctionCycle> AuctionCycles => _db.GetCollection<AuctionCycle>("AuctionCycles");
     private IMongoCollection<ConfigDoc> Configs => _db.GetCollection<ConfigDoc>("Configs");
 
     // --- Members ---
@@ -157,17 +159,43 @@ public class MongoDataService
             new ReplaceOptions { IsUpsert = true });
     }
 
+    // --- Auction Cycles ---
+    public async Task<List<AuctionCycle>> LoadAuctionCyclesAsync() =>
+        await AuctionCycles.Find(_ => true).SortBy(c => c.CycleId).ToListAsync();
+
+    public async Task SaveAuctionCycleAsync(AuctionCycle cycle)
+    {
+        await AuctionCycles.ReplaceOneAsync(
+            c => c.CycleId == cycle.CycleId,
+            cycle,
+            new ReplaceOptions { IsUpsert = true });
+    }
+
     // --- Auction Results ---
     public async Task<List<AuctionResult>> LoadAuctionResultsAsync() =>
         await AuctionResults.Find(_ => true).ToListAsync();
 
+    public async Task DeleteAuctionResultAsync(AuctionResult result)
+    {
+        await AuctionResults.DeleteOneAsync(r => r.Id == result.Id);
+    }
+
     public async Task SaveAuctionResultAsync(AuctionResult result)
     {
+        var weekStartUtc = result.WeekStart.Date;
         var filter = Builders<AuctionResult>.Filter.And(
-            Builders<AuctionResult>.Filter.Gte(r => r.WeekStart, result.WeekStart.Date),
-            Builders<AuctionResult>.Filter.Lt(r => r.WeekStart, result.WeekStart.Date.AddDays(1)),
+            Builders<AuctionResult>.Filter.Eq(r => r.CycleId, result.CycleId),
+            Builders<AuctionResult>.Filter.Gte(r => r.WeekStart, weekStartUtc),
+            Builders<AuctionResult>.Filter.Lt(r => r.WeekStart, weekStartUtc.AddDays(1)),
             Builders<AuctionResult>.Filter.Eq(r => r.EventName, result.EventName)
         );
+
+        var existing = await AuctionResults.Find(filter).FirstOrDefaultAsync();
+        if (existing != null)
+            result.Id = existing.Id;
+        else if (result.Id == ObjectId.Empty)
+            result.Id = ObjectId.GenerateNewId();
+
         await AuctionResults.ReplaceOneAsync(filter, result, new ReplaceOptions { IsUpsert = true });
     }
 }

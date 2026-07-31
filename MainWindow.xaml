@@ -744,8 +744,8 @@
                                     Command="{Binding RunAuctionCommand}"/>
                             <Button Content="🗑 Clear" Style="{StaticResource DangerButton}" Margin="0,0,8,0"
                                     Command="{Binding ClearAuctionCommand}"/>
-                            <Button Content="📤 Export" Style="{StaticResource ActionButton}" Margin="0,0,8,0"
-                                    Command="{Binding ExportAuctionCommand}"/>
+                            <Button Content="🔁 Reset" Style="{StaticResource DangerButton}" Margin="0,0,8,0"
+                                    Command="{Binding ResetWeekCommand}"/>
                             <Button Content="👤 Missed Players" Style="{StaticResource ActionButton}" Background="#f9e2af"
                                     Command="{Binding ShowMissedPlayersCommand}"/>
                         </StackPanel>
@@ -773,41 +773,171 @@
                     </DataGrid.ColumnHeaderStyle>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="IGN" Binding="{Binding IGN}" Width="150"/>
-                        <DataGridTextColumn Binding="{Binding Item1Qty}" Width="SizeToHeader">
-                            <DataGridTextColumn.HeaderTemplate>
+                        <DataGridTemplateColumn Width="SizeToHeader">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate><TextBlock Text="{Binding DataContext.AuctionCol1, RelativeSource={RelativeSource AncestorType=Window}}"/></DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.AuctionCol1, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    <Border Padding="6,2">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Item1Full}" Value="True"><Setter Property="Background" Value="#4d1f1f"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item1Partial}" Value="True"><Setter Property="Background" Value="#4d3d00"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item1Green}" Value="True"><Setter Property="Background" Value="#1f4d2a"/></DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding Item1Qty}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#a6adc8"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Item1Full}" Value="True"><Setter Property="Foreground" Value="#f38ba8"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item1Partial}" Value="True"><Setter Property="Foreground" Value="#f9e2af"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item1Green}" Value="True"><Setter Property="Foreground" Value="#a6e3a1"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
                                 </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding Item2Qty}" Width="SizeToHeader">
-                            <DataGridTextColumn.HeaderTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="SizeToHeader">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate><TextBlock Text="{Binding DataContext.AuctionCol2, RelativeSource={RelativeSource AncestorType=Window}}"/></DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.AuctionCol2, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    <Border Padding="6,2">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Item2Full}" Value="True"><Setter Property="Background" Value="#4d1f1f"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item2Partial}" Value="True"><Setter Property="Background" Value="#4d3d00"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item2Green}" Value="True"><Setter Property="Background" Value="#1f4d2a"/></DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding Item2Qty}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#a6adc8"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Item2Full}" Value="True"><Setter Property="Foreground" Value="#f38ba8"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item2Partial}" Value="True"><Setter Property="Foreground" Value="#f9e2af"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item2Green}" Value="True"><Setter Property="Foreground" Value="#a6e3a1"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
                                 </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding Item3Qty}" Width="SizeToHeader">
-                            <DataGridTextColumn.HeaderTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="SizeToHeader">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate><TextBlock Text="{Binding DataContext.AuctionCol3, RelativeSource={RelativeSource AncestorType=Window}}"/></DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.AuctionCol3, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    <Border Padding="6,2">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Item3Full}" Value="True"><Setter Property="Background" Value="#4d1f1f"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item3Partial}" Value="True"><Setter Property="Background" Value="#4d3d00"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item3Green}" Value="True"><Setter Property="Background" Value="#1f4d2a"/></DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding Item3Qty}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#a6adc8"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Item3Full}" Value="True"><Setter Property="Foreground" Value="#f38ba8"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item3Partial}" Value="True"><Setter Property="Foreground" Value="#f9e2af"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item3Green}" Value="True"><Setter Property="Foreground" Value="#a6e3a1"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
                                 </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding Item4Qty}" Width="SizeToHeader">
-                            <DataGridTextColumn.HeaderTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="SizeToHeader">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate><TextBlock Text="{Binding DataContext.AuctionCol4, RelativeSource={RelativeSource AncestorType=Window}}"/></DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.AuctionCol4, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    <Border Padding="6,2">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Item4Full}" Value="True"><Setter Property="Background" Value="#4d1f1f"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item4Partial}" Value="True"><Setter Property="Background" Value="#4d3d00"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item4Green}" Value="True"><Setter Property="Background" Value="#1f4d2a"/></DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding Item4Qty}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#a6adc8"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Item4Full}" Value="True"><Setter Property="Foreground" Value="#f38ba8"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item4Partial}" Value="True"><Setter Property="Foreground" Value="#f9e2af"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item4Green}" Value="True"><Setter Property="Foreground" Value="#a6e3a1"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
                                 </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-                        <DataGridTextColumn Binding="{Binding Item5Qty}" Width="SizeToHeader">
-                            <DataGridTextColumn.HeaderTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="SizeToHeader">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate><TextBlock Text="{Binding DataContext.AuctionCol5, RelativeSource={RelativeSource AncestorType=Window}}"/></DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.AuctionCol5, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    <Border Padding="6,2">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Item5Full}" Value="True"><Setter Property="Background" Value="#4d1f1f"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item5Partial}" Value="True"><Setter Property="Background" Value="#4d3d00"/></DataTrigger>
+                                                    <DataTrigger Binding="{Binding Item5Green}" Value="True"><Setter Property="Background" Value="#1f4d2a"/></DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding Item5Qty}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#a6adc8"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Item5Full}" Value="True"><Setter Property="Foreground" Value="#f38ba8"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item5Partial}" Value="True"><Setter Property="Foreground" Value="#f9e2af"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item5Green}" Value="True"><Setter Property="Foreground" Value="#a6e3a1"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
                                 </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

@@ -60,6 +60,7 @@ public class MainViewModel : ViewModelBase
         AuctionNextWeekCommand = new RelayCommand(_ => AuctionWeekStart = AuctionWeekStart.AddDays(7));
         TogglePriorityCommand = new RelayCommand(p => TogglePriority(p));
         ShowMissedPlayersCommand = new RelayCommand(_ => ShowMissedPlayers());
+        ResetWeekCommand = new RelayCommand(async _ => await ResetWeekAsync());
 
         _ = LoadAllAsync();
     }
@@ -279,6 +280,7 @@ public class MainViewModel : ViewModelBase
     public ICommand AuctionNextWeekCommand { get; }
     public ICommand TogglePriorityCommand { get; }
     public ICommand ShowMissedPlayersCommand { get; }
+    public ICommand ResetWeekCommand { get; }
 
 
     // ==================== DATA ====================
@@ -293,6 +295,7 @@ public class MainViewModel : ViewModelBase
         var events = await _dataService.LoadEventsAsync();
         var auctionItemTypes = await _dataService.LoadAuctionItemTypesAsync();
         var auctionResults = await _dataService.LoadAuctionResultsAsync();
+        var auctionCycles = await _dataService.LoadAuctionCyclesAsync();
 
         Members.Clear();
         foreach (var m in members) Members.Add(m);
@@ -323,6 +326,16 @@ public class MainViewModel : ViewModelBase
 
         AuctionResults.Clear();
         foreach (var r in auctionResults) AuctionResults.Add(r);
+
+        AuctionCycles.Clear();
+        foreach (var c in auctionCycles) AuctionCycles.Add(c);
+        CurrentCycleId = AuctionCycles.Count > 0 ? AuctionCycles.Max(c => c.CycleId) : 1;
+        if (!AuctionCycles.Any())
+        {
+            var firstCycle = new AuctionCycle { CycleId = 1, StartedAt = DateTime.UtcNow };
+            AuctionCycles.Add(firstCycle);
+            await _dataService.SaveAuctionCycleAsync(firstCycle);
+        }
 
         if (EventTabNames.Count > 0)
         {
@@ -792,6 +805,10 @@ public class MainViewModel : ViewModelBase
     public ObservableCollection<AuctionResult> AuctionResults { get; } = new();
     public ObservableCollection<AuctionPivotRow> CurrentAuctionPivot { get; } = new();
     public ObservableCollection<AuctionEventSetup> AuctionEventSetups { get; } = new();
+    public ObservableCollection<AuctionCycle> AuctionCycles { get; } = new();
+
+    private int _currentCycleId = 1;
+    public int CurrentCycleId { get => _currentCycleId; set => SetProperty(ref _currentCycleId, value); }
 
     // Auction column header names
     private string _auctionCol1 = "";
@@ -870,43 +887,61 @@ public class MainViewModel : ViewModelBase
     private void LoadAuctionResultsForWeek()
     {
         CurrentAuctionPivot.Clear();
-        var monday = GetMonday(AuctionWeekStart).Date;
-        var result = AuctionResults.FirstOrDefault(r =>
-            r.WeekStart.ToLocalTime().Date == monday && r.EventName == SelectedAuctionEvent);
+        var monday = DateTime.SpecifyKind(GetMonday(AuctionWeekStart).Date, DateTimeKind.Utc);
 
-        if (result == null)
+        // Distributions for the selected event only (current cycle)
+        var selectedEventDist = AuctionResults
+            .Where(r => r.CycleId == CurrentCycleId && r.WeekStart.Date == monday.Date && r.EventName == SelectedAuctionEvent)
+            .SelectMany(r => r.Distributions)
+            .GroupBy(d => d.MemberId)
+            .ToDictionary(g => g.Key, g => g.GroupBy(d => d.ItemName).ToDictionary(x => x.Key, x => x.Sum(d => d.Quantity)));
+
+        // Totals from OTHER events in current cycle, used for red/yellow coloring
+        var otherEventsDist = AuctionResults
+            .Where(r => r.CycleId == CurrentCycleId && r.WeekStart.Date == monday.Date && r.EventName != SelectedAuctionEvent)
+            .SelectMany(r => r.Distributions)
+            .GroupBy(d => d.MemberId)
+            .ToDictionary(g => g.Key, g => g.GroupBy(d => d.ItemName).ToDictionary(x => x.Key, x => x.Sum(d => d.Quantity)));
+
+        if (!selectedEventDist.Any())
         {
             AuctionSummary = "No results yet.";
             return;
         }
 
-        if (result.Distributions.Count == 0)
-        {
-            AuctionSummary = "No results yet.";
-            return;
-        }
+        var allRecipients = selectedEventDist.Keys
+            .Select(id => Members.FirstOrDefault(m => m.Id == id))
+            .Where(m => m != null)
+            .OrderBy(m => m!.IGN)
+            .ToList();
 
-        // Build pivot: group by player
-        var grouped = result.Distributions.GroupBy(d => d.MemberIGN);
-        foreach (var g in grouped.OrderBy(g => g.Key))
+        foreach (var member in allRecipients)
         {
-            var row = new AuctionPivotRow { IGN = g.Key };
-            foreach (var d in g)
-                row.ItemQuantities[d.ItemName] = d.Quantity;
+            var row = new AuctionPivotRow { IGN = member!.IGN };
+            var evtBag = selectedEventDist.TryGetValue(member.Id, out var eb) ? eb : new();
+            var otherBag = otherEventsDist.TryGetValue(member.Id, out var ob) ? ob : new();
+
+            foreach (var itemType in AuctionItemTypes)
+            {
+                var thisEventQty = evtBag.GetValueOrDefault(itemType.Name, 0);
+                var otherQty = otherBag.GetValueOrDefault(itemType.Name, 0);
+
+                // Always set all 4 dicts for every item so ElementAt(i) positions stay consistent
+                row.ItemQuantities[itemType.Name] = thisEventQty;
+                row.ItemGreen[itemType.Name] = thisEventQty > 0;
+                row.ItemFull[itemType.Name] = thisEventQty == 0 && otherQty >= itemType.MaxPerPlayer;
+                row.ItemPartial[itemType.Name] = thisEventQty == 0 && otherQty > 0 && otherQty < itemType.MaxPerPlayer;
+            }
             CurrentAuctionPivot.Add(row);
         }
 
-        // Summary
         var lines = new List<string>();
-        foreach (var setup in AuctionEventSetups.Where(s => s.TotalAvailable > 0))
+        foreach (var itemType in AuctionItemTypes)
         {
-            var distributed = result.Distributions
-                .Where(d => d.ItemName == setup.ItemName)
-                .Sum(d => d.Quantity);
-            var left = setup.TotalAvailable - distributed;
-            lines.Add($"{setup.ItemName}: {distributed}/{setup.TotalAvailable} given, {left} left");
+            var distributed = selectedEventDist.Values.Sum(bag => bag.GetValueOrDefault(itemType.Name, 0));
+            lines.Add($"{itemType.Name}: {distributed} given");
         }
-        lines.Add($"Players: {grouped.Count()}");
+        lines.Add($"Players: {allRecipients.Count}");
         AuctionSummary = string.Join(" | ", lines);
     }
 
@@ -921,100 +956,109 @@ public class MainViewModel : ViewModelBase
             return;
         }
 
-        var monday = GetMonday(AuctionWeekStart);
-
-        // Get present members for this event on its scheduled date
+        var monday = DateTime.SpecifyKind(GetMonday(AuctionWeekStart).Date, DateTimeKind.Utc);
         var evt = AvailableEvents.FirstOrDefault(e => e.Name == SelectedAuctionEvent);
         if (evt == null) return;
 
-        int eventOffset = ((int)evt.ScheduledDay + 6) % 7;
-        var eventDate = monday.AddDays(eventOffset);
-
+        // Remove absent members for this event
+        var eventDate = monday.AddDays(((int)evt.ScheduledDay + 6) % 7);
         var absentIds = AttendanceRecords
             .Where(r => r.EventName == SelectedAuctionEvent && r.EventDate.Date == eventDate.Date && r.IsAbsent)
             .Select(r => r.MemberId)
             .ToHashSet();
-
         var presentMembers = Members.Where(m => !absentIds.Contains(m.Id)).ToList();
 
-        // Exclude members who already won in earlier events this week
-        var earlierResults = AuctionResults
-            .Where(r => r.WeekStart.ToLocalTime().Date == monday.Date && r.EventName != SelectedAuctionEvent)
-            .SelectMany(r => r.Distributions)
-            .Select(d => d.MemberId)
-            .ToHashSet();
+        // Build cycle bag: what each member has received in the current cycle
+        var lifetimeReceived = new Dictionary<string, Dictionary<string, int>>();
+        foreach (var pastResult in AuctionResults.Where(r => r.CycleId == CurrentCycleId))
+        {
+            foreach (var d in pastResult.Distributions)
+            {
+                if (!lifetimeReceived.ContainsKey(d.MemberId))
+                    lifetimeReceived[d.MemberId] = new Dictionary<string, int>();
+                lifetimeReceived[d.MemberId].TryGetValue(d.ItemName, out int had);
+                lifetimeReceived[d.MemberId][d.ItemName] = had + d.Quantity;
+            }
+        }
 
-        var eligibleMembers = presentMembers.Where(m => !earlierResults.Contains(m.Id)).ToList();
+        var activeSetups = AuctionEventSetups.Where(s => s.TotalAvailable > 0).ToList();
+
+        // Eligible = present AND still has room for at least one item type across all time
+        var eligibleMembers = presentMembers.Where(m =>
+            activeSetups.Any(s =>
+            {
+                lifetimeReceived.TryGetValue(m.Id, out var bag);
+                return (bag?.GetValueOrDefault(s.ItemName, 0) ?? 0) < s.MaxPerPlayer;
+            })
+        ).ToList();
 
         if (eligibleMembers.Count == 0)
         {
-            MessageBox.Show("No eligible members for this event.", "Auction", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("All present members have already filled their bags this week!", "Auction", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
-        // Run randomizer — priority members first (sorted by CP desc), then rest randomized
-        var distributions = new List<AuctionDistribution>();
         var rng = new Random();
+        var priorityMembers = eligibleMembers.Where(m => m.IsPriority).OrderByDescending(m => m.CombatPower).ToList();
+        var normalMembers = eligibleMembers.Where(m => !m.IsPriority).OrderBy(_ => rng.Next()).ToList();
+        var ordered = priorityMembers.Concat(normalMembers).ToList();
 
-        foreach (var setup in AuctionEventSetups.Where(s => s.TotalAvailable > 0))
+        var distributions = new List<AuctionDistribution>();
+
+        foreach (var setup in activeSetups)
         {
             var remaining = setup.TotalAvailable;
-            var playerCounts = new Dictionary<string, int>();
-            var priorityMembers = eligibleMembers.Where(m => m.IsPriority).OrderByDescending(m => m.CombatPower).ToList();
-            var normalMembers = eligibleMembers.Where(m => !m.IsPriority).OrderBy(_ => rng.Next()).ToList();
-            var ordered = priorityMembers.Concat(normalMembers).ToList();
 
-            while (remaining > 0 && ordered.Count > 0)
+            foreach (var member in ordered)
             {
-                foreach (var member in ordered.ToList())
-                {
-                    if (remaining <= 0) break;
+                if (remaining <= 0) break;
 
-                    playerCounts.TryGetValue(member.Id, out int current);
-                    if (current >= setup.MaxPerPlayer)
-                    {
-                        ordered.Remove(member);
-                        continue;
-                    }
+                // How much has this member already received for this item across all time?
+                lifetimeReceived.TryGetValue(member.Id, out var memberBag);
+                var alreadyHas = memberBag?.GetValueOrDefault(setup.ItemName, 0) ?? 0;
+                var stillNeeds = setup.MaxPerPlayer - alreadyHas;
+                if (stillNeeds <= 0) continue;
 
-                    var give = Math.Min(setup.MaxPerPlayer - current, remaining);
-                    if (give > 1) give = 1;
-
-                    playerCounts[member.Id] = current + give;
-                    remaining -= give;
-                }
-
-                ordered.RemoveAll(m => playerCounts.GetValueOrDefault(m.Id) >= setup.MaxPerPlayer);
-            }
-
-            foreach (var kvp in playerCounts)
-            {
-                var member = eligibleMembers.First(m => m.Id == kvp.Key);
+                var give = Math.Min(stillNeeds, remaining);
+                remaining -= give;
                 distributions.Add(new AuctionDistribution
                 {
-                    MemberId = kvp.Key,
+                    MemberId = member.Id,
                     MemberIGN = member.IGN,
                     ItemName = setup.ItemName,
-                    Quantity = kvp.Value
+                    Quantity = give
                 });
             }
         }
 
-        // Save result
-        var result = new AuctionResult
-        {
-            WeekStart = monday.Date,
-            EventName = SelectedAuctionEvent,
-            Distributions = distributions
-        };
-
-        await _dataService.SaveAuctionResultAsync(result);
-
-        // Update local collection
+        // Merge new distributions into existing ones for this event+cycle
         var existing = AuctionResults.FirstOrDefault(r =>
-            r.WeekStart.ToLocalTime().Date == monday.Date && r.EventName == SelectedAuctionEvent);
-        if (existing != null) AuctionResults.Remove(existing);
-        AuctionResults.Add(result);
+            r.CycleId == CurrentCycleId && r.WeekStart.Date == monday.Date && r.EventName == SelectedAuctionEvent);
+
+        if (existing != null)
+        {
+            foreach (var d in distributions)
+            {
+                var prev = existing.Distributions.FirstOrDefault(x => x.MemberId == d.MemberId && x.ItemName == d.ItemName);
+                if (prev != null)
+                    prev.Quantity += d.Quantity;
+                else
+                    existing.Distributions.Add(d);
+            }
+            await _dataService.SaveAuctionResultAsync(existing);
+        }
+        else
+        {
+            var result = new AuctionResult
+            {
+                WeekStart = monday,
+                EventName = SelectedAuctionEvent,
+                Distributions = distributions,
+                CycleId = CurrentCycleId
+            };
+            await _dataService.SaveAuctionResultAsync(result);
+            AuctionResults.Add(result);
+        }
 
         LoadAuctionResultsForWeek();
         StatusMessage = $"Auction distributed for {SelectedAuctionEvent}";
@@ -1025,8 +1069,9 @@ public class MainViewModel : ViewModelBase
         if (string.IsNullOrEmpty(SelectedAuctionEvent)) return;
         var monday = GetMonday(AuctionWeekStart);
 
+        var mondayClear = DateTime.SpecifyKind(GetMonday(AuctionWeekStart).Date, DateTimeKind.Utc);
         var existing = AuctionResults.FirstOrDefault(r =>
-            r.WeekStart.ToLocalTime().Date == monday.Date && r.EventName == SelectedAuctionEvent);
+            r.CycleId == CurrentCycleId && r.WeekStart.Date == mondayClear.Date && r.EventName == SelectedAuctionEvent);
         if (existing == null)
         {
             MessageBox.Show("Nothing to clear.", "Auction", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1037,8 +1082,7 @@ public class MainViewModel : ViewModelBase
         if (confirm != MessageBoxResult.Yes) return;
 
         AuctionResults.Remove(existing);
-        var emptyResult = new AuctionResult { WeekStart = monday.Date, EventName = SelectedAuctionEvent, Distributions = new() };
-        await _dataService.SaveAuctionResultAsync(emptyResult);
+        await _dataService.DeleteAuctionResultAsync(existing);
 
         LoadAuctionResultsForWeek();
         StatusMessage = $"Auction cleared for {SelectedAuctionEvent}";
@@ -1116,19 +1160,65 @@ public class MainViewModel : ViewModelBase
 
     private void ShowMissedPlayers()
     {
-        var monday = GetMonday(AuctionWeekStart).Date;
         var allWinners = AuctionResults
-            .Where(r => r.WeekStart.ToLocalTime().Date == monday)
+            .Where(r => r.CycleId == CurrentCycleId)
             .SelectMany(r => r.Distributions)
             .Select(d => d.MemberId)
             .ToHashSet();
 
         var missed = Members.Where(m => !allWinners.Contains(m.Id)).Select(m => m.IGN).ToList();
+        var allIGNs = Members.Select(m => m.IGN).ToList();
 
-        if (missed.Count == 0)
-            MessageBox.Show("All members received auction items this week!", "Auction", MessageBoxButton.OK, MessageBoxImage.Information);
-        else
-            MessageBox.Show($"Players who didn't receive items this week ({missed.Count}):\n\n• {string.Join("\n• ", missed)}", "Missed Players", MessageBoxButton.OK, MessageBoxImage.Information);
+        var dialog = new GuildTracker.Views.PriorityDialog(missed, allIGNs)
+        {
+            Owner = Application.Current.MainWindow,
+            Title = "Missed Players"
+        };
+        dialog.ShowDialog();
+    }
+
+    private async Task ResetWeekAsync()
+    {
+        // Find who still hasn't gotten their full share in the current cycle
+        var cycleReceived = new Dictionary<string, Dictionary<string, int>>();
+        foreach (var r in AuctionResults.Where(r => r.CycleId == CurrentCycleId))
+            foreach (var d in r.Distributions)
+            {
+                if (!cycleReceived.ContainsKey(d.MemberId))
+                    cycleReceived[d.MemberId] = new Dictionary<string, int>();
+                cycleReceived[d.MemberId].TryGetValue(d.ItemName, out int had);
+                cycleReceived[d.MemberId][d.ItemName] = had + d.Quantity;
+            }
+
+        var missedIGNs = Members.Where(m => AuctionItemTypes.Any(t =>
+        {
+            cycleReceived.TryGetValue(m.Id, out var bag);
+            return (bag?.GetValueOrDefault(t.Name, 0) ?? 0) < t.MaxPerPlayer;
+        })).Select(m => m.IGN).ToList();
+        var allIGNs = Members.Select(m => m.IGN).ToList();
+
+        var dialog = new GuildTracker.Views.PriorityDialog(missedIGNs, allIGNs)
+        {
+            Owner = Application.Current.MainWindow,
+            Title = "Reset & Set Priority"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        var priorityIGNs = dialog.ResultIGNs.ToHashSet();
+        foreach (var member in Members)
+            member.IsPriority = priorityIGNs.Contains(member.IGN);
+
+        // Start a new cycle — old data stays as history
+        CurrentCycleId++;
+        var newCycle = new AuctionCycle { CycleId = CurrentCycleId, StartedAt = DateTime.UtcNow };
+        AuctionCycles.Add(newCycle);
+        await _dataService.SaveAuctionCycleAsync(newCycle);
+
+        await _dataService.SaveMembersAsync(Members.ToList());
+        LoadAuctionResultsForWeek();
+        ApplyFilter();
+        StatusMessage = $"Cycle {CurrentCycleId} started. {priorityIGNs.Count} players set as priority.";
     }
 }
 
@@ -1196,10 +1286,37 @@ public class AuctionPivotRow
 {
     public string IGN { get; set; } = string.Empty;
     public Dictionary<string, int> ItemQuantities { get; set; } = new();
-    // Flattened for DataGrid display
-    public string Item1Qty => ItemQuantities.Count > 0 ? ItemQuantities.Values.ElementAt(0).ToString() : "";
-    public string Item2Qty => ItemQuantities.Count > 1 ? ItemQuantities.Values.ElementAt(1).ToString() : "";
-    public string Item3Qty => ItemQuantities.Count > 2 ? ItemQuantities.Values.ElementAt(2).ToString() : "";
-    public string Item4Qty => ItemQuantities.Count > 3 ? ItemQuantities.Values.ElementAt(3).ToString() : "";
-    public string Item5Qty => ItemQuantities.Count > 4 ? ItemQuantities.Values.ElementAt(4).ToString() : "";
+    public Dictionary<string, bool> ItemFull { get; set; } = new();
+    public Dictionary<string, bool> ItemPartial { get; set; } = new();
+    public Dictionary<string, bool> ItemGreen { get; set; } = new();
+
+    // Key lookup by index into the ordered keys list
+    private int GetQty(int i) => ItemQuantities.Count > i ? ItemQuantities.Values.ElementAt(i) : 0;
+    private bool GetFull(int i) => ItemFull.Count > i && ItemFull.Values.ElementAt(i);
+    private bool GetPartial(int i) => ItemPartial.Count > i && ItemPartial.Values.ElementAt(i);
+    private bool GetGreen(int i) => ItemGreen.Count > i && ItemGreen.Values.ElementAt(i);
+
+    public string Item1Qty => GetQty(0) > 0 ? GetQty(0).ToString() : "";
+    public string Item2Qty => GetQty(1) > 0 ? GetQty(1).ToString() : "";
+    public string Item3Qty => GetQty(2) > 0 ? GetQty(2).ToString() : "";
+    public string Item4Qty => GetQty(3) > 0 ? GetQty(3).ToString() : "";
+    public string Item5Qty => GetQty(4) > 0 ? GetQty(4).ToString() : "";
+
+    public bool Item1Full => GetFull(0);
+    public bool Item2Full => GetFull(1);
+    public bool Item3Full => GetFull(2);
+    public bool Item4Full => GetFull(3);
+    public bool Item5Full => GetFull(4);
+
+    public bool Item1Partial => GetPartial(0);
+    public bool Item2Partial => GetPartial(1);
+    public bool Item3Partial => GetPartial(2);
+    public bool Item4Partial => GetPartial(3);
+    public bool Item5Partial => GetPartial(4);
+
+    public bool Item1Green => GetGreen(0);
+    public bool Item2Green => GetGreen(1);
+    public bool Item3Green => GetGreen(2);
+    public bool Item4Green => GetGreen(3);
+    public bool Item5Green => GetGreen(4);
 }

@@ -29,6 +29,16 @@ public class AuctionResult
     public string EventName { get; set; } = string.Empty;
     public List<AuctionDistribution> Distributions { get; set; } = new();
     public List<AuctionItemAllocation> Quantities { get; set; } = new();
+    public int CycleId { get; set; } = 1;
+}
+
+public class AuctionCycle
+{
+    [BsonId]
+    public ObjectId Id { get; set; }
+    public int CycleId { get; set; }
+    public DateTime StartedAt { get; set; }
+    public string Note { get; set; } = string.Empty;
 }
 
 public class AuctionDistribution
