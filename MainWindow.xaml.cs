@@ -87,11 +87,12 @@ public partial class MainWindow : Window
 
         var classes = vm.AvailableClasses.Where(c => c != "All").ToList();
         var roles = vm.AvailableRoles.ToList();
+        var memberCpHistory = vm.CpHistory.Where(r => r.MemberId == vm.SelectedMember.Id).ToList();
 
         var dialog = new MemberDetailDialog(
             vm.SelectedMember,
             vm.AttendanceRecords,
-            vm.CpHistory.ToList(),
+            memberCpHistory,
             classes,
             roles)
         {

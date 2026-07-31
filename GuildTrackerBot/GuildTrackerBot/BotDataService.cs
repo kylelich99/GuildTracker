@@ -18,7 +18,10 @@ public class BotDataService
     private IMongoCollection<ConfigDoc> Configs => _db.GetCollection<ConfigDoc>("Configs");
 
     public async Task<List<GuildMember>> LoadMembersAsync() =>
-        await Members.Find(_ => true).ToListAsync();
+        await Members.Find(m => m.IsActive).ToListAsync();
+
+    public async Task<List<GuildMember>> LoadTopMembersByCpAsync(int count = 10) =>
+        await Members.Find(m => m.IsActive).SortByDescending(m => m.CombatPower).Limit(count).ToListAsync();
 
     public async Task InsertMemberAsync(GuildMember member) =>
         await Members.InsertOneAsync(member);
@@ -29,8 +32,8 @@ public class BotDataService
     public async Task AddCpRecordAsync(CpRecord record) =>
         await CpHistory.InsertOneAsync(record);
 
-    public async Task<List<CpRecord>> LoadCpHistoryForMemberAsync(string memberId) =>
-        await CpHistory.Find(r => r.MemberId == memberId).SortByDescending(r => r.RecordedDate).Limit(5).ToListAsync();
+    public async Task<List<CpRecord>> LoadCpHistoryForMemberAsync(string memberId, int limit = 5) =>
+        await CpHistory.Find(r => r.MemberId == memberId).SortByDescending(r => r.RecordedDate).Limit(limit).ToListAsync();
 
     public async Task<List<AttendanceRecord>> LoadAttendanceForMemberAsync(string memberId) =>
         await Attendance.Find(r => r.MemberId == memberId).ToListAsync();

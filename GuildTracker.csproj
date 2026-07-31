@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>GuildTracker</RootNamespace>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DefaultItemExcludes>$(DefaultItemExcludes);GuildTrackerBot\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +19,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc2" />
   </ItemGroup>
 
   <ItemGroup>

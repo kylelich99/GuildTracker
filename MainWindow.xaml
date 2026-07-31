@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:GuildTracker.ViewModels"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
         Title="Guild Tracker" 
         Height="720" Width="1200"
         WindowStartupLocation="CenterScreen"
@@ -460,7 +461,34 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Discord ID" Binding="{Binding DiscordId}" Width="120"/>
+        <DataGridTextColumn Header="Discord ID" Binding="{Binding DiscordId}" Width="120"/>
+                        <DataGridTemplateColumn Header="Attendance %" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Padding="4,2" FontWeight="SemiBold">
+                                        <TextBlock.Text>
+                                            <Binding Path="AttendancePct" StringFormat="{}{0}%"/>
+                                        </TextBlock.Text>
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#a6e3a1"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding AttendancePct}" Value="100">
+                                                        <Setter Property="Foreground" Value="#a6e3a1"/>
+                                                    </DataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding AttendancePct}" Value="0"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Foreground" Value="#f38ba8"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
@@ -678,6 +706,12 @@
                     <Border Grid.Column="1" Style="{StaticResource CardBorder}">
                         <StackPanel>
                             <TextBlock Text="CP History" FontSize="14" FontWeight="SemiBold" Foreground="#cba6f7" Margin="0,0,0,8"/>
+                            <!-- CP Chart -->
+                            <lvc:CartesianChart Series="{Binding CpChartSeries}"
+                                               XAxes="{Binding CpChartXAxes}"
+                                               Height="180" Margin="0,0,0,8"
+                                               Background="Transparent"
+                                               Visibility="{Binding CpChartSeries.Length, Converter={StaticResource BoolToVis}}"/>
                             <ItemsControl ItemsSource="{Binding SelectedMemberCpHistory}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -1102,7 +1136,7 @@
     <!-- Status Bar -->
     <Border Grid.Row="1" Background="#181825" Padding="12,6">
         <StackPanel Orientation="Horizontal">
-            <TextBlock Text="{Binding StatusMessage}" Foreground="#6c7086" FontSize="11"/>
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#a6e3a1" FontSize="11" FontWeight="SemiBold"/>
         </StackPanel>
     </Border>
 

@@ -5,6 +5,10 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using GuildTracker.Models;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 
 namespace GuildTracker.Views;
 
@@ -21,7 +25,7 @@ public partial class MemberDetailDialog : Window
         InitializeComponent();
         _allRecords = allRecords;
         _member = member;
-        _vm = new MemberDetailViewModel(member, allRecords.ToList(), classes, roles);
+        _vm = new MemberDetailViewModel(member, allRecords.ToList(), cpHistory, classes, roles);
         DataContext = _vm;
     }
 
@@ -59,7 +63,7 @@ public partial class MemberDetailDialog : Window
                 _allRecords.Remove(record);
         }
 
-        _vm = new MemberDetailViewModel(_member, _allRecords.ToList(), _vm.Classes, _vm.Roles);
+        _vm = new MemberDetailViewModel(_member, _allRecords.ToList(), _vm.CpHistoryList, _vm.Classes, _vm.Roles);
         DataContext = _vm;
     }
 
@@ -78,14 +82,14 @@ public partial class MemberDetailDialog : Window
                 _allRecords.Remove(record);
         }
 
-        _vm = new MemberDetailViewModel(_member, _allRecords.ToList(), _vm.Classes, _vm.Roles);
+        _vm = new MemberDetailViewModel(_member, _allRecords.ToList(), _vm.CpHistoryList, _vm.Classes, _vm.Roles);
         DataContext = _vm;
     }
 }
 
 public class MemberDetailViewModel : INotifyPropertyChanged
 {
-    public MemberDetailViewModel(GuildMember member, List<AttendanceRecord> allRecords, List<string> classes, List<string> roles)
+    public MemberDetailViewModel(GuildMember member, List<AttendanceRecord> allRecords, List<CpRecord> cpHistory, List<string> classes, List<string> roles)
     {
         IGN = member.IGN;
         Class = member.Class;
@@ -96,6 +100,7 @@ public class MemberDetailViewModel : INotifyPropertyChanged
         Notes = member.Notes ?? "";
         Classes = classes;
         Roles = roles;
+        CpHistoryList = cpHistory;
 
         var memberRecords = allRecords.Where(r => r.MemberId == member.Id).ToList();
         AbsenceHistory = memberRecords.Where(r => r.IsAbsent).OrderByDescending(r => r.EventDate).ToList();
@@ -105,12 +110,50 @@ public class MemberDetailViewModel : INotifyPropertyChanged
         TotalMvps = MvpHistory.Count;
         TotalGodOfWar = memberRecords.Count(r => r.IsGodOfWar);
         TotalBestSupport = memberRecords.Count(r => r.IsBestSupport);
+
+        BuildCpChart(cpHistory);
+    }
+
+    private void BuildCpChart(List<CpRecord> cpHistory)
+    {
+        var sorted = cpHistory.OrderBy(r => r.RecordedDate).ToList();
+        HasCpChart = sorted.Count >= 2;
+        if (!HasCpChart) return;
+
+        CpChartSeries = new ISeries[]
+        {
+            new LineSeries<double>
+            {
+                Values = sorted.Select(r => (double)r.CombatPower).ToArray(),
+                Name = "CP",
+                Stroke = new SolidColorPaint(SKColor.Parse("#89b4fa")) { StrokeThickness = 2 },
+                GeometryStroke = new SolidColorPaint(SKColor.Parse("#89b4fa")) { StrokeThickness = 2 },
+                GeometryFill = new SolidColorPaint(SKColor.Parse("#89b4fa")),
+                Fill = new LinearGradientPaint(SKColor.Parse("#3389b4fa"), SKColor.Parse("#0089b4fa")),
+                GeometrySize = 6,
+                LineSmoothness = 0.3
+            }
+        };
+        CpChartXAxes = new Axis[]
+        {
+            new Axis
+            {
+                Labels = sorted.Select(r => r.RecordedDate.ToString("MMM dd")).ToArray(),
+                LabelsPaint = new SolidColorPaint(SKColor.Parse("#a6adc8")),
+                TicksPaint = new SolidColorPaint(SKColor.Parse("#45475a")),
+                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#313244"))
+            }
+        };
     }
 
     public string IGN { get; }
     public DateTime JoinDate { get; }
     public List<string> Classes { get; }
     public List<string> Roles { get; }
+    public List<CpRecord> CpHistoryList { get; }
+    public bool HasCpChart { get; private set; }
+    public ISeries[] CpChartSeries { get; private set; } = Array.Empty<ISeries>();
+    public Axis[] CpChartXAxes { get; private set; } = Array.Empty<Axis>();
 
     private string _class = "";
     public string Class { get => _class; set { _class = value; OnPropertyChanged(); } }

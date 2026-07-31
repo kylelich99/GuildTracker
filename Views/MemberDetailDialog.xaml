@@ -1,6 +1,7 @@
 <Window x:Class="GuildTracker.Views.MemberDetailDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
         Title="Member Details"
         Width="550" SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
@@ -8,6 +9,7 @@
         Background="#1e1e2e">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style TargetType="TextBlock" x:Key="Label">
             <Setter Property="Foreground" Value="#a6adc8"/>
             <Setter Property="FontSize" Value="11"/>
@@ -179,6 +181,16 @@
                                  TextWrapping="Wrap" AcceptsReturn="True" Height="60"/>
                     </StackPanel>
                 </Grid>
+            </Border>
+
+            <!-- Absence History -->
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,6">
+                <TextBlock Text="📈 CP Progression" FontSize="14" FontWeight="SemiBold" Foreground="#89b4fa"/>
+            </StackPanel>
+            <Border Background="#313244" CornerRadius="8" Padding="12" Margin="0,0,0,12"
+                    Visibility="{Binding HasCpChart, Converter={StaticResource BoolToVis}}">
+                <lvc:CartesianChart Series="{Binding CpChartSeries}" XAxes="{Binding CpChartXAxes}"
+                                    Height="160" Background="Transparent"/>
             </Border>
 
             <!-- Absence History -->

@@ -8,8 +8,12 @@ using GuildTracker.Helpers;
 using GuildTracker.Models;
 using GuildTracker.Services;
 using GuildTracker.Views;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Win32;
 using MongoDB.Bson;
+using SkiaSharp;
 
 namespace GuildTracker.ViewModels;
 
@@ -181,6 +185,12 @@ public class MainViewModel : ViewModelBase
     public int NewCpValue { get => _newCpValue; set => SetProperty(ref _newCpValue, value); }
 
     public ObservableCollection<CpRecord> SelectedMemberCpHistory { get; } = new();
+
+    private ISeries[] _cpChartSeries = Array.Empty<ISeries>();
+    public ISeries[] CpChartSeries { get => _cpChartSeries; set => SetProperty(ref _cpChartSeries, value); }
+
+    private Axis[] _cpChartXAxes = Array.Empty<Axis>();
+    public Axis[] CpChartXAxes { get => _cpChartXAxes; set => SetProperty(ref _cpChartXAxes, value); }
 
     // --- Settings ---
     private string _newClassName = string.Empty;
@@ -362,8 +372,7 @@ public class MainViewModel : ViewModelBase
         EventTabNames.Clear();
         foreach (var e in AvailableEvents) EventTabNames.Add(e.Name);
         SelectedAuctionEvent = savedEvent;
-        StatusMessage = $"Saved at {DateTime.Now:HH:mm:ss}";
-        MessageBox.Show("Data saved successfully!", "Guild Tracker", MessageBoxButton.OK, MessageBoxImage.Information);
+        StatusMessage = $"✅ Saved at {DateTime.Now:HH:mm:ss}";
     }
 
     private async Task AutoSaveAsync()
@@ -427,24 +436,25 @@ public class MainViewModel : ViewModelBase
         var toRemove = selectedItems.Cast<GuildMember>().ToList();
         var names = string.Join("\n• ", toRemove.Select(m => m.IGN));
         var msg = toRemove.Count == 1
-            ? $"Remove \"{toRemove[0].IGN}\" from the guild?"
-            : $"Remove {toRemove.Count} members?\n\n• {names}";
+            ? $"Deactivate \"{toRemove[0].IGN}\"? Their history will be preserved."
+            : $"Deactivate {toRemove.Count} members? Their history will be preserved.\n\n• {names}";
 
-        var result = MessageBox.Show(msg, "Confirm Removal", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        var result = MessageBox.Show(msg, "Confirm Deactivation", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
 
         foreach (var member in toRemove)
-            Members.Remove(member);
+            member.IsActive = false;
 
         ApplyFilter();
         UpdateDashboard();
+        _ = AutoSaveAsync();
     }
 
     private void ApplyFilter()
     {
         FilteredMembers.Clear();
         var query = SearchText.ToLower();
-        var filtered = Members.AsEnumerable();
+        var filtered = Members.Where(m => m.IsActive);
 
         if (!string.IsNullOrEmpty(SelectedClassFilter) && SelectedClassFilter != "All")
             filtered = filtered.Where(m => m.Class == SelectedClassFilter);
@@ -455,7 +465,16 @@ public class MainViewModel : ViewModelBase
                 || m.Class.ToLower().Contains(query)
                 || m.Role.ToLower().Contains(query));
 
-        foreach (var m in filtered) FilteredMembers.Add(m);
+        // Compute attendance % for each visible member
+        var totalEvents = AttendanceRecords.Select(r => new { r.EventName, r.EventDate.Date })
+            .Distinct().Count();
+
+        foreach (var m in filtered)
+        {
+            var attended = totalEvents - AttendanceRecords.Count(r => r.MemberId == m.Id && r.IsAbsent);
+            m.AttendancePct = totalEvents > 0 ? (int)Math.Round(attended * 100.0 / totalEvents) : 100;
+            FilteredMembers.Add(m);
+        }
     }
 
     private void UpdateDashboard()
@@ -700,10 +719,49 @@ public class MainViewModel : ViewModelBase
     private void LoadMemberCpHistory()
     {
         SelectedMemberCpHistory.Clear();
-        if (SelectedMember == null) return;
+        if (SelectedMember == null)
+        {
+            CpChartSeries = Array.Empty<ISeries>();
+            return;
+        }
         var history = CpHistory.Where(c => c.MemberId == SelectedMember.Id)
-            .OrderByDescending(c => c.RecordedDate);
-        foreach (var r in history) SelectedMemberCpHistory.Add(r);
+            .OrderBy(c => c.RecordedDate).ToList();
+        foreach (var r in history.OrderByDescending(c => c.RecordedDate)) SelectedMemberCpHistory.Add(r);
+
+        if (history.Count < 2)
+        {
+            CpChartSeries = Array.Empty<ISeries>();
+            CpChartXAxes = Array.Empty<Axis>();
+            return;
+        }
+
+        var values = history.Select(r => (double)r.CombatPower).ToArray();
+        var labels = history.Select(r => r.RecordedDate.ToString("MMM dd")).ToArray();
+
+        CpChartSeries = new ISeries[]
+        {
+            new LineSeries<double>
+            {
+                Values = values,
+                Name = "CP",
+                Stroke = new SolidColorPaint(SKColor.Parse("#89b4fa")) { StrokeThickness = 2 },
+                GeometryStroke = new SolidColorPaint(SKColor.Parse("#89b4fa")) { StrokeThickness = 2 },
+                GeometryFill = new SolidColorPaint(SKColor.Parse("#89b4fa")),
+                Fill = new LinearGradientPaint(SKColor.Parse("#3389b4fa"), SKColor.Parse("#0089b4fa")),
+                GeometrySize = 6,
+                LineSmoothness = 0.3
+            }
+        };
+        CpChartXAxes = new Axis[]
+        {
+            new Axis
+            {
+                Labels = labels,
+                LabelsPaint = new SolidColorPaint(SKColor.Parse("#a6adc8")),
+                TicksPaint = new SolidColorPaint(SKColor.Parse("#45475a")),
+                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#313244"))
+            }
+        };
     }
 
     // ==================== SETTINGS ====================

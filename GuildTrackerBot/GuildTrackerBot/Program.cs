@@ -61,6 +61,14 @@ async Task OnReady()
         new SlashCommandBuilder()
             .WithName("myinfo")
             .WithDescription("Show your full guild member profile"),
+
+        new SlashCommandBuilder()
+            .WithName("leaderboard")
+            .WithDescription("Show top 10 members by Combat Power"),
+
+        new SlashCommandBuilder()
+            .WithName("cphistory")
+            .WithDescription("Show your CP progression over time"),
     };
 
     try
@@ -93,7 +101,6 @@ async Task OnSlashCommand(SocketSlashCommand command)
             var cls = command.Data.Options.First(o => o.Name == "class").Value.ToString()!;
             var notes = command.Data.Options.FirstOrDefault(o => o.Name == "notes")?.Value?.ToString() ?? string.Empty;
 
-            // Block duplicate IGN
             if (members.Any(m => m.IGN.Equals(ign, StringComparison.OrdinalIgnoreCase)))
             {
                 await command.RespondAsync($"❌ IGN **{ign}** is already registered. Contact a leader if this is your character.", ephemeral: true);
@@ -221,6 +228,68 @@ async Task OnSlashCommand(SocketSlashCommand command)
                 .AddField("Awards", awards.Count > 0 ? string.Join("  ", awards) : "None")
                 .AddField("CP History (last 5)", recentCp)
                 .WithFooter(string.IsNullOrEmpty(member.Notes) ? "" : $"📝 {member.Notes}")
+                .Build();
+
+            await command.RespondAsync(embed: embed, ephemeral: true);
+            break;
+        }
+
+        case "leaderboard":
+        {
+            var top = await dataService.LoadTopMembersByCpAsync(10);
+            if (top.Count == 0)
+            {
+                await command.RespondAsync("No members registered yet.");
+                return;
+            }
+
+            var medals = new[] { "🥇", "🥈", "🥉" };
+            var lines = top.Select((m, i) =>
+            {
+                var prefix = i < 3 ? medals[i] : $"`{i + 1}.`";
+                return $"{prefix} **{m.IGN}** — {m.CombatPower:N0} CP  _{m.Class}_";
+            });
+
+            var embed = new EmbedBuilder()
+                .WithTitle("⚔️ Guild CP Leaderboard")
+                .WithColor(Color.Gold)
+                .WithDescription(string.Join("\n", lines))
+                .WithFooter($"Top {top.Count} members by Combat Power")
+                .WithCurrentTimestamp()
+                .Build();
+
+            await command.RespondAsync(embed: embed); // public — not ephemeral
+            break;
+        }
+
+        case "cphistory":
+        {
+            if (member == null) { await NotRegistered(command); return; }
+
+            var history = await dataService.LoadCpHistoryForMemberAsync(member.Id, 20);
+            if (history.Count == 0)
+            {
+                await command.RespondAsync("❌ No CP history found.", ephemeral: true);
+                return;
+            }
+
+            var sorted = history.OrderBy(r => r.RecordedDate).ToList();
+            var lines = sorted.Select(r =>
+            {
+                var src = r.Source == "Discord" ? "🤖" : "💻";
+                return $"`{r.RecordedDate:MMM dd, yyyy}` {src} **{r.CombatPower:N0}**";
+            });
+
+            var first = sorted.First().CombatPower;
+            var last = sorted.Last().CombatPower;
+            var gain = last - first;
+            var gainStr = gain >= 0 ? $"+{gain:N0}" : $"{gain:N0}";
+
+            var embed = new EmbedBuilder()
+                .WithTitle($"📈 CP History — {member.IGN}")
+                .WithColor(Color.Blue)
+                .WithDescription(string.Join("\n", lines))
+                .WithFooter($"Total gain: {gainStr} CP over {sorted.Count} records")
                 .Build();
 
             await command.RespondAsync(embed: embed, ephemeral: true);
