@@ -69,6 +69,10 @@ async Task OnReady()
         new SlashCommandBuilder()
             .WithName("cphistory")
             .WithDescription("Show your CP progression over time"),
+
+        new SlashCommandBuilder()
+            .WithName("help")
+            .WithDescription("Show all available commands"),
     };
 
     try
@@ -290,6 +294,28 @@ async Task OnSlashCommand(SocketSlashCommand command)
                 .WithColor(Color.Blue)
                 .WithDescription(string.Join("\n", lines))
                 .WithFooter($"Total gain: {gainStr} CP over {sorted.Count} records")
+                .Build();
+
+            await command.RespondAsync(embed: embed, ephemeral: true);
+            break;
+        }
+        case "help":
+        {
+            var embed = new EmbedBuilder()
+                .WithTitle("⚔️ GuildTracker Bot Commands")
+                .WithColor(Color.Purple)
+                .AddField("📋 Profile",
+                    "`/register` — Join the guild (IGN, CP, Class)\n" +
+                    "`/myinfo` — View your full profile, awards & CP history", false)
+                .AddField("⚡ Updates",
+                    "`/updatecp` — Update your combat power\n" +
+                    "`/updateign` — Update your in-game name\n" +
+                    "`/updateclass` — Update your class\n" +
+                    "`/updatenotes` — Update your notes", false)
+                .AddField("🏆 Rankings",
+                    "`/leaderboard` — Top 10 members by CP (public)\n" +
+                    "`/cphistory` — Your CP progression over time", false)
+                .WithFooter("All commands except /leaderboard are private (only you can see the response)")
                 .Build();
 
             await command.RespondAsync(embed: embed, ephemeral: true);
